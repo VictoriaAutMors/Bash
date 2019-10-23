@@ -5,9 +5,9 @@ lexemes: done
 execute: done
 
 change i/0:
-  1) >a.txt && > a.txt: done
-  2) >b.txt <a.txt: done
-  3) >b.txt "sm text" < a.txt: done
+  1) >>a.txt && > a.txt: done
+  2) >>b.txt <a.txt: done
+  3) >>b.txt "sm text" < a.txt: done
   4) ">txt" >b.txt <a.txt: 75% done(doesnt work for ">" or "<")
   
 Pipes:
