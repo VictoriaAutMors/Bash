@@ -1,3 +1,9 @@
+lexemes:
+  1) get word: done
+  2) get list: done
+
+execute: done
+
 change i/0:
   1) >a.txt && > a.txt: done
   2) >b.txt <a.txt: done
