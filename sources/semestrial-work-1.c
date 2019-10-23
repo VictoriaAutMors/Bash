@@ -25,11 +25,6 @@ int special_symbol(char ch)
     return (ch == '>' || ch == '<' || ch == '|');
 }
 
-char *get_quote()
-{
-    
-}
-
 char *get_word(char *end)
 {
     if (*end == '\n') { // no more lexemes
