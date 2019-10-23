@@ -5,6 +5,7 @@ change i/0:
   4)  ">txt" >b.txt <a.txt: 75% done
   
 Pipes:
+
   1)pipes: 1%(maybe) done
 
 General:
