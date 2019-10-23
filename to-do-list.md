@@ -1,4 +1,4 @@
-lexemes:
+lexemes: done
   1) get word: done
   2) get list: done
 
