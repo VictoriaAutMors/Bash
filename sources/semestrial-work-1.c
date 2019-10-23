@@ -7,6 +7,9 @@
 #include <fcntl.h>
 #include <assert.h>
 
+#define PIPE_READ 0
+#define PIPE_WRITE 1
+
 void free_list(char **list)
 {
     int i = 0;
@@ -17,13 +20,23 @@ void free_list(char **list)
     free(list);
 }
 
+int special_symbol(char ch)
+{
+    return (ch == '>' || ch == '<' || ch == '|');
+}
+
+char *get_quote()
+{
+    
+}
+
 char *get_word(char *end)
 {
     if (*end == '\n') { // no more lexemes
         return NULL;
     }
     int i = 0;
-    char ch, *word = NULL, *check = NULL;
+    char ch, *word = NULL;
     do {
         ch = getchar();
         while (!i && (ch == ' ' || ch == '\t')) { // search for first letter
@@ -32,13 +45,14 @@ char *get_word(char *end)
                 return NULL;
             }
         }
-        check = (char *)realloc(word, (i + 1) * sizeof(char));
-        if (check == NULL) {
-            err(1, NULL);
-        }
-        word = check;
+        word = (char *)realloc(word, (i + 1) * sizeof(char));
         word[i] = ch;
         i++;
+        if (i == 1 && special_symbol(ch)) { // separate special symbol and string
+            word = (char *)realloc(word, 2 * sizeof(char));
+            ch = ' ';
+            i++;
+        }
     } while (ch != ' ' && ch != '\t' && ch != '\n');
     word[i - 1] = '\0'; // set end of the lexeme
     *end = ch;
@@ -76,9 +90,18 @@ void rm_str(int num, char **list)
     free(list[num + 1]); // free previous end of the list
 }
 
+void print_list(char **list)
+{
+    int i = 0;
+    while (list[i] != NULL) {
+        puts(list[i]);
+        i++;
+    }
+}
+
 ssize_t special_case(char **list)
 {
-    ssize_t fd;
+    ssize_t fd = 0;
     int i = 0;
     char ch;
     while (list[i] != NULL) {
@@ -90,14 +113,14 @@ ssize_t special_case(char **list)
                     free_list(list);
                     err(1, NULL);
                 }
-                dup2(fd, 1);
+                dup2(fd, STDOUT_FILENO);
             } else {
                 fd = open(list[i + 1], O_RDONLY);
                 if (fd < 0) {
                     free_list(list);
                     err(1, NULL);
                 }
-                dup2(fd, 0);
+                dup2(fd, STDIN_FILENO);
             }
             rm_str(i, list); // remove ">" or "<"
             rm_str(i, list); // remove opened file name
@@ -105,32 +128,28 @@ ssize_t special_case(char **list)
         }
         i++;
     }
-    return 0;
+    return fd;
 }
 
 int main(void)
 {
-    ssize_t fd, pd[2];
+    ssize_t fd, fd2;
     pid_t pid;
     char **list = NULL;
     while (1) {
-        list = get_list(); 
+        list = get_list();
         if (list != NULL && (!strcmp(list[0], "exit") || !strcmp(list[0], "quit"))) {
             free_list(list);
             return 0;
         }
         pid = fork();
-        if (pipe(pd) < 0) {
-            err(1, NULL);
-        }
         if (pid < 0) {
             free_list(list);
             err(1, NULL);
         }
         if (pid == 0) { // execute in child process
-            close(pd[0]);
-            close(pd[1]);
             fd = special_case(list); // check for special symbols like "<" or ">"
+            fd2 = special_case(list);
             if (execvp(list[0], list) < 0) {
                 err(1, NULL);
             }
@@ -138,11 +157,13 @@ int main(void)
             if (fd != 0) {
                 close(fd);
             }
+            if (fd2 != 0)
+            {
+                close(fd2);
+            }
             return 0; // close child process
         }
-        close(pd[1]);
         wait(NULL); // waiting for child to end his process
-        close(pd[0]);
         free_list(list);
     }
     return 1;
