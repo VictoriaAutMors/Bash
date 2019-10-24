@@ -20,7 +20,7 @@ void free_list(char **list)
     free(list);
 }
 
-int special_symbol(char ch)
+int is_special_symbol(char ch)
 {
     return (ch == '>' || ch == '<' || ch == '|');
 }
@@ -53,6 +53,30 @@ char get_first_letter(char ch)
     return ch;
 }
 
+char *separate_symbol_word(char ch, char *end)
+{
+    if (is_special_symbol(ch)) {
+        char *word = (char *)calloc(3, sizeof(char));
+        if (word == NULL) {
+            err(1, "failed to allocate memory in separate symbol and word");
+        }
+        word[1] = ch;
+        *end = ' '; // separate word and special symbol by space
+        return word;
+    }
+    return NULL;
+}
+
+char *word_special_case(char ch, char *end)
+{
+    char *word = get_quote(ch);
+    if (word) {
+        return word;
+    }
+    word = separate_symbol_word(ch, end);
+    return word;
+}
+
 char *get_word(char *end)
 {
     if (*end == '\n') { // no more lexemes
@@ -67,19 +91,17 @@ char *get_word(char *end)
             if (ch == '\n') {
                 return NULL;
             }
-            word = get_quote(ch);
+            word = word_special_case(ch, end);
             if (word) {
                 return word;
             }
         }
         word = (char *)realloc(word, (i + 1) * sizeof(char));
+        if (word == NULL) {
+            err(1, "failed reallocate memory in get word");
+        }
         word[i] = ch;
         i++;
-        if (i == 1 && special_symbol(ch)) { // separate special symbol and string
-            word = (char *)realloc(word, 2 * sizeof(char));
-            ch = ' ';
-            i++;
-        }
     } while (ch != ' ' && ch != '\t' && ch != '\n');
     word[i - 1] = '\0'; // set end of the lexeme
     *end = ch;
@@ -103,7 +125,7 @@ char **get_list(void)
     return list;
 }
 
-void rm_str(int num, char **list)
+void rm_string(int num, char **list)
 {
     char *temp;
     while (list[num + 1] != NULL) { /* swaping i - string with other strings
@@ -132,8 +154,8 @@ ssize_t special_case(char **list)
     int i = 0;
     char ch;
     while (list[i] != NULL) {
-        if (!strcmp(list[i], ">") || !strcmp(list[i], "<")) {
-            ch = list[i][0];
+        if (!list[i][0]) {
+            ch = list[i][1];
             if (ch == '>') {
                 fd = open(list[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0755);
                 if (fd < 0) {
@@ -149,8 +171,8 @@ ssize_t special_case(char **list)
                 }
                 dup2(fd, STDIN_FILENO);
             }
-            rm_str(i, list); // remove ">" or "<"
-            rm_str(i, list); // remove opened file name
+            rm_string(i, list); // remove ">" or "<"
+            rm_string(i, list); // remove opened file name
             return fd;
         }
         i++;
@@ -184,8 +206,7 @@ int main(void)
             if (fd != 0) {
                 close(fd);
             }
-            if (fd2 != 0)
-            {
+            if (fd2 != 0) {
                 close(fd2);
             }
             return 0; // close child process
