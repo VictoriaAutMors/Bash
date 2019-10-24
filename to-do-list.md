@@ -8,7 +8,7 @@ change i/0:
   1) >'>'a.txt && > a.txt: done
   2) >'>'b.txt <a.txt: done
   3) >'>'b.txt "sm text" < a.txt: done
-  4) ">txt" >b.txt <a.txt: 75% done(doesnt work for ">" or "<")
+  4) >">txt" >b.txt <a.txt: done
   
 Pipes:
   1) pipes: 1%(maybe) done
