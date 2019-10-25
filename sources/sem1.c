@@ -20,6 +20,8 @@ void free_list(char **list)
     free(list);
 }
 
+/*  functions to fill our */
+
 int is_special_symbol(char ch)
 {
     return (ch == '>' || ch == '<' || ch == '|');
@@ -79,7 +81,7 @@ char *word_special_case(char ch, char *end)
 
 char *get_word(char *end)
 {
-    if (*end == '\n') { // no more lexemes
+    if (*end == '\n' || *end == '|' || *end == '&') { // no more lexemes
         return NULL;
     }
     int i = 0;
@@ -88,7 +90,8 @@ char *get_word(char *end)
         ch = getchar();
         if (!i) {
             ch = get_first_letter(ch);
-            if (ch == '\n') {
+            if (ch == '\n' || ch == '|' || ch == '&') {
+                *end = ch;
                 return NULL;
             }
             word = word_special_case(ch, end);
@@ -102,14 +105,17 @@ char *get_word(char *end)
         }
         word[i] = ch;
         i++;
-    } while (ch != ' ' && ch != '\t' && ch != '\n');
+    } while (ch != ' ' && ch != '\t' && ch != '\n' && ch != '|');
     word[i - 1] = '\0'; // set end of the lexeme
     *end = ch;
     return word;
 }
 
-char **get_list(void)
+char **get_list(char *end_of_line)
 {
+    if (*end_of_line == '\n') {
+        return NULL;
+    }
     char end = 0, **list = NULL, **check = NULL;
     int i = 0;
     do {
@@ -120,9 +126,26 @@ char **get_list(void)
         }
         list = check;
         list[i] = get_word(&end);
+        if (!list[0]) {
+            free_list(list);
+            return NULL;
+        }
         i++;
     } while (list[i - 1] != NULL);
+    *end_of_line = end;
     return list;
+}
+
+char ***get_catalog(void)
+{
+    char end_of_line = 0, ***catalog = NULL;
+    int i = 0;
+    do {
+        catalog = (char ***)realloc(catalog, (i + 1) * sizeof(char **));
+        catalog[i] = get_list(&end_of_line);
+        i++;
+    } while (catalog[i - 1] != NULL);
+    return catalog;
 }
 
 void rm_string(int num, char **list)
@@ -180,39 +203,75 @@ ssize_t special_case(char **list)
     return fd;
 }
 
-int main(void)
+void execute(char **list)
 {
     ssize_t fd, fd2;
+    fd = special_case(list); // check for special symbols like "<" or ">"
+    fd2 = special_case(list);
+    if (execvp(list[0], list) < 0) {
+        err(1, NULL);
+    }
+    free_list(list);
+    if (fd != 0) {
+        close(fd);
+    }
+    if (fd2 != 0) {
+        close(fd2);
+    }
+}
+
+void free_catalog(char ***catalog)
+{
+    int i = 0;
+    while (catalog[i] != NULL) {
+        free_list(catalog[i]);
+        i++;
+    }
+    free(catalog);
+}
+
+void print_list_list(char ***list)
+{
+    int i = 0;
+    while (list[i] != NULL) {
+        print_list(list[i]);
+        printf(" %d\n", i + 1);
+        i++;
+    }
+}
+
+int execcat(void)
+{
     pid_t pid;
-    char **list = NULL;
+    int i = 0;
+    char ***catalog = NULL;
     while (1) {
-        list = get_list();
-        if (list != NULL && (!strcmp(list[0], "exit") || !strcmp(list[0], "quit"))) {
-            free_list(list);
+        catalog = get_catalog();
+        if (catalog != NULL && catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
+            free_catalog(catalog);
             return 0;
         }
-        pid = fork();
-        if (pid < 0) {
-            free_list(list);
-            err(1, NULL);
-        }
-        if (pid == 0) { // execute in child process
-            fd = special_case(list); // check for special symbols like "<" or ">"
-            fd2 = special_case(list);
-            if (execvp(list[0], list) < 0) {
+        i = 0;
+        while (catalog[i] != NULL) {
+            pid = fork();
+            if (pid < 0) {
+                free_catalog(catalog);
                 err(1, NULL);
             }
-            free_list(list);
-            if (fd != 0) {
-                close(fd);
+            if (pid == 0) { // execute in child process
+                execute(catalog[i]);
+                return 0; // close child process
             }
-            if (fd2 != 0) {
-                close(fd2);
-            }
-            return 0; // close child process
+            wait(NULL); // waiting for child to end his process
+            i++;
         }
-        wait(NULL); // waiting for child to end his process
-        free_list(list);
+        free_catalog(catalog);
     }
     return 1;
+}
+
+int main(void)
+{
+    execcat();
+    return 0;
 }
