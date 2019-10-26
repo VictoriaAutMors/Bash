@@ -7,8 +7,9 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#define PIPE_READ 0
-#define PIPE_WRITE 1
+int ispipe = 0;
+
+/* functions to free heap after program execution*/
 
 void free_list(char **list)
 {
@@ -20,7 +21,17 @@ void free_list(char **list)
     free(list);
 }
 
-/*  functions to fill our */
+void free_catalog(char ***catalog)
+{
+    int i = 0;
+    while (catalog[i] != NULL) {
+        free_list(catalog[i]);
+        i++;
+    }
+    free(catalog);
+}
+
+/*  functions to fill array*/
 
 int is_special_symbol(char ch)
 {
@@ -136,7 +147,7 @@ char **get_list(char *end_of_line)
     return list;
 }
 
-char ***get_catalog(void)
+char ***get_catalog(int *pipes)
 {
     char end_of_line = 0, ***catalog = NULL;
     int i = 0;
@@ -145,8 +156,11 @@ char ***get_catalog(void)
         catalog[i] = get_list(&end_of_line);
         i++;
     } while (catalog[i - 1] != NULL);
+    *pipes = i - 1;
     return catalog;
 }
+
+/*functions to change input and output */
 
 void rm_string(int num, char **list)
 {
@@ -160,15 +174,6 @@ void rm_string(int num, char **list)
     }
     list[num] = NULL; // set new end of the list
     free(list[num + 1]); // free previous end of the list
-}
-
-void print_list(char **list)
-{
-    int i = 0;
-    while (list[i] != NULL) {
-        puts(list[i]);
-        i++;
-    }
 }
 
 ssize_t special_case(char **list)
@@ -203,11 +208,13 @@ ssize_t special_case(char **list)
     return fd;
 }
 
+/* function to execute commands */
+
 void execute(char **list)
 {
     ssize_t fd, fd2;
     fd = special_case(list); // check for special symbols like "<" or ">"
-    fd2 = special_case(list);
+    fd2 = special_case(list); // check for the second one
     if (execvp(list[0], list) < 0) {
         err(1, NULL);
     }
@@ -220,14 +227,13 @@ void execute(char **list)
     }
 }
 
-void free_catalog(char ***catalog)
+void print_list(char **list)
 {
     int i = 0;
-    while (catalog[i] != NULL) {
-        free_list(catalog[i]);
+    while (list[i] != NULL) {
+        puts(list[i]);
         i++;
     }
-    free(catalog);
 }
 
 void print_list_list(char ***list)
@@ -240,30 +246,53 @@ void print_list_list(char ***list)
     }
 }
 
+void create_pipe(int i, int **pd)
+{
+    if (ispipe !=) {
+        return;
+    }
+    if (!(i % 2)) {
+        dup2(pd[i][STDIN_FILENO], 0);
+    } else {
+        dup2(pd[i][STDOUT_FILENO], 1);        
+    }
+    close(pd[i][STDIN_FILENO]);
+    close(pd[i][STDOUT_FILENO]);
+    return;
+}
+
 int execcat(void)
 {
+//  int (*pd)[2];
     pid_t pid;
-    int i = 0;
+    int i, j, pipes;
     char ***catalog = NULL;
     while (1) {
-        catalog = get_catalog();
+        catalog = get_catalog(&pipes);
         if (catalog != NULL && catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
             free_catalog(catalog);
             return 0;
         }
         i = 0;
+        j = 1;
         while (catalog[i] != NULL) {
+//            if (!(pipe(pd[pipes - 1])) && !(pipe(pd[pipes]))) {
+//                free_catalog(catalog);
+//                err(1, "failed to create a pipe");
+//            }
             pid = fork();
             if (pid < 0) {
                 free_catalog(catalog);
                 err(1, NULL);
             }
             if (pid == 0) { // execute in child process
+//                create_pipe(j, pd);
                 execute(catalog[i]);
                 return 0; // close child process
             }
             wait(NULL); // waiting for child to end his process
             i++;
+            j++;
         }
         free_catalog(catalog);
     }
