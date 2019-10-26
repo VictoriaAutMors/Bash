@@ -13,13 +13,9 @@ int ispipe = 0;
 
 void rm_string(int num, char **list)
 {
-    char *temp;
-    printf("LIN%d\n", num);
     while (list[num + 1] != NULL) { /* swaping i - string with other strings
                                     until end of the list */
-        temp = list[num];
         list[num] = list[num + 1];
-        list[num + 1] = temp;
         num++;
     }
     list[num] = NULL; // set new end of the list
