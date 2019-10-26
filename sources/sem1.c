@@ -5,11 +5,26 @@
 #include <sys/wait.h>
 #include <err.h>
 #include <fcntl.h>
-#include <assert.h>
+#include <limits.h>
 
 int ispipe = 0;
 
 /* functions to free heap after program execution*/
+
+void rm_string(int num, char **list)
+{
+    char *temp;
+    printf("LIN%d\n", num);
+    while (list[num + 1] != NULL) { /* swaping i - string with other strings
+                                    until end of the list */
+        temp = list[num];
+        list[num] = list[num + 1];
+        list[num + 1] = temp;
+        num++;
+    }
+    list[num] = NULL; // set new end of the list
+    free(list[num + 1]); // free previous end of the list
+}
 
 void free_list(char **list)
 {
@@ -18,6 +33,7 @@ void free_list(char **list)
         free(list[i]);
         i++;
     }
+    free(list[i]);
     free(list);
 }
 
@@ -28,6 +44,7 @@ void free_catalog(char ***catalog)
         free_list(catalog[i]);
         i++;
     }
+    free(catalog[i]);
     free(catalog);
 }
 
@@ -92,7 +109,7 @@ char *word_special_case(char ch, char *end)
 
 char *get_word(char *end)
 {
-    if (*end == '\n' || *end == '|' || *end == '&') { // no more lexemes
+    if (*end == '\n' || *end == '|') { // no more lexemes
         return NULL;
     }
     int i = 0;
@@ -101,7 +118,7 @@ char *get_word(char *end)
         ch = getchar();
         if (!i) {
             ch = get_first_letter(ch);
-            if (ch == '\n' || ch == '|' || ch == '&') {
+            if (ch == '\n' || ch == '|') {
                 *end = ch;
                 return NULL;
             }
@@ -147,7 +164,7 @@ char **get_list(char *end_of_line)
     return list;
 }
 
-char ***get_catalog(int *pipes)
+char ***get_catalog(int *cmds)
 {
     char end_of_line = 0, ***catalog = NULL;
     int i = 0;
@@ -156,27 +173,27 @@ char ***get_catalog(int *pipes)
         catalog[i] = get_list(&end_of_line);
         i++;
     } while (catalog[i - 1] != NULL);
-    *pipes = i - 1;
+    *cmds = i - 2;
     return catalog;
 }
 
 /*functions to change input and output */
 
-void rm_string(int num, char **list)
+int is_bg_proc(char **list)
 {
-    char *temp;
-    while (list[num + 1] != NULL) { /* swaping i - string with other strings
-                                    until end of the list */
-        temp = list[num];
-        list[num] = list[num + 1];
-        list[num + 1] = temp;
-        num++;
+    int i = 0;
+    while (list[i] != NULL) {
+        if (list[i][0] == '&')
+        {
+            rm_string(i, list);
+            return 1;
+        }
+        i++;
     }
-    list[num] = NULL; // set new end of the list
-    free(list[num + 1]); // free previous end of the list
+    return 0;
 }
 
-ssize_t special_case(char **list)
+ssize_t change_IO(char **list)
 {
     ssize_t fd = 0;
     int i = 0;
@@ -213,8 +230,8 @@ ssize_t special_case(char **list)
 void execute(char **list)
 {
     ssize_t fd, fd2;
-    fd = special_case(list); // check for special symbols like "<" or ">"
-    fd2 = special_case(list); // check for the second one
+    fd = change_IO(list); // check for special symbols like "<" or ">"
+    fd2 = change_IO(list); // check for the second one
     if (execvp(list[0], list) < 0) {
         err(1, NULL);
     }
@@ -232,6 +249,7 @@ void print_list(char **list)
     int i = 0;
     while (list[i] != NULL) {
         puts(list[i]);
+        printf("V%d\n", i + 1);
         i++;
     }
 }
@@ -241,14 +259,14 @@ void print_list_list(char ***list)
     int i = 0;
     while (list[i] != NULL) {
         print_list(list[i]);
-        printf(" %d\n", i + 1);
+        printf("%d\n", i + 1);
         i++;
     }
 }
 
 void create_pipe(int i, int **pd)
 {
-    if (ispipe !=) {
+    if (!ispipe) {
         return;
     }
     if (!(i % 2)) {
@@ -261,46 +279,76 @@ void create_pipe(int i, int **pd)
     return;
 }
 
+void wait_bg_proc(int bg_proc_count)
+{
+    for (int i = 0; i < bg_proc_count; i++)
+    {
+        wait(NULL);
+    }
+}
+
+void start_line(void)
+{
+    char hostname[_SC_HOST_NAME_MAX];
+    if (gethostname(hostname, _SC_HOST_NAME_MAX)) {
+        err(1, NULL);
+    }
+    printf("\033[1;32m%s@%s\033[0m:\033[1;34m%s\033[0m$ ",
+            getenv("USER"), hostname, getenv("PWD"));
+}
+
 int execcat(void)
 {
 //  int (*pd)[2];
     pid_t pid;
-    int i, j, pipes;
+    int i, j, cmds, bg_proc_count = 0;
     char ***catalog = NULL;
     while (1) {
-        catalog = get_catalog(&pipes);
-        if (catalog != NULL && catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
+        start_line();
+        catalog = get_catalog(&cmds);
+        if (!catalog) {
+            err(1, "failed to create catalog");
+        }
+        if (catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
             free_catalog(catalog);
-            return 0;
+            wait_bg_proc(bg_proc_count);
+            return EXIT_SUCCESS;
         }
         i = 0;
-        j = 1;
         while (catalog[i] != NULL) {
 //            if (!(pipe(pd[pipes - 1])) && !(pipe(pd[pipes]))) {
 //                free_catalog(catalog);
 //                err(1, "failed to create a pipe");
 //            }
+            j = is_bg_proc(catalog[cmds]);
+            bg_proc_count += j;
             pid = fork();
             if (pid < 0) {
                 free_catalog(catalog);
                 err(1, NULL);
             }
             if (pid == 0) { // execute in child process
-//                create_pipe(j, pd);
+                if (j) {
+                    printf("[%d]    %d\n", bg_proc_count, getpid());
+                }
                 execute(catalog[i]);
-                return 0; // close child process
+                return EXIT_SUCCESS; // close child process
             }
-            wait(NULL); // waiting for child to end his process
+            if (1) {
+                wait(NULL); // waiting for child to end his process
+            }
             i++;
             j++;
         }
         free_catalog(catalog);
     }
-    return 1;
+    return EXIT_FAILURE;
 }
 
 int main(void)
 {
-    execcat();
-    return 0;
+    if(execcat()) {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
