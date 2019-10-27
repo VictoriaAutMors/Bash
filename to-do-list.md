@@ -18,9 +18,10 @@ Background process:
   2) >BG start function: done
   3) print pid early than the new line 
   
-New line:done
-  
-Change Directory:done
+>New line:done
+
+
+>Change Directory:done
 
 signals:
 
