@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <math.h>
+#include <pwd.h>
 
 #define PURPLE "\033[38;5;141m"
 #define BLUE "\033[38;5;57m "
@@ -247,16 +248,22 @@ ssize_t change_IO(char **list)
 
 int change_dir(char **list)
 {
-    return 1;
     if (strcmp(list[0], "cd")) {
         return EXIT_FAILURE;
     }
-    //char parent[200];
-    //getcwd(parent, 200);
     if (!list[1] || list[1][0] == '~') {
-        //chdir(getenv("HOME"));
-    } else if (!strcmp(list[1], "..")){
-        
+        uid_t uid = getuid();
+        struct passwd *pw = getpwuid(uid);
+        if (pw == NULL) {
+            err(1, NULL);
+        }
+        if (chdir(pw -> pw_dir)) {
+            perror("failed to change directory");
+        }
+    } else {
+        if (chdir(list[1])) {
+            perror("failed to chaneg directory");
+        }
     }
     return EXIT_SUCCESS;
 }
@@ -265,11 +272,18 @@ int change_dir(char **list)
 
 void new_line(void)
 {
-    char pc_name[_SC_HOST_NAME_MAX];
-    if (gethostname(pc_name, _SC_HOST_NAME_MAX)) {
-        err(1, NULL);
+    char pc_name[HOST_NAME_MAX], login[LOGIN_NAME_MAX];
+    char cwd[4096];
+    if (getlogin_r(login, LOGIN_NAME_MAX)) {
+        err(1, "failed to get username");
     }
-    printf(PURPLE"%s@%s" RESET ":" BLUE "%s"RESET"$ ", getenv("USER"), pc_name, getenv("PWD"));
+    if (gethostname(pc_name, HOST_NAME_MAX)) {
+        err(1, "failed to get host name");
+    }
+    if (!getcwd(cwd, sizeof(cwd))) {
+        err(1, "failed to get path to current directory");
+    }
+    printf(PURPLE"%s@%s" RESET ":" BLUE "%s"RESET"$ ", login, pc_name, cwd);
 }
 
 /* function to execute commands */
