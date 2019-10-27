@@ -6,15 +6,18 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <math.h>
 
-int ispipe = 0;
+#define PURPLE "\033[38;5;141m"
+#define BLUE "\033[38;5;57m "
+#define RESET "\033[0m"
 
 /* functions to free heap after program execution*/
 
-void rm_string(int num, char **list)
+void free_string_in_list(int num, char **list)
 {
-    while (list[num + 1] != NULL) { /* swaping i - string with other strings
-                                    until end of the list */
+    free(list[num]);
+    while (list[num + 1] != NULL) { /* pushing i's string to the end of the list */
         list[num] = list[num + 1];
         num++;
     }
@@ -173,25 +176,47 @@ char ***get_catalog(int *cmds)
     return catalog;
 }
 
-/*functions to change input and output */
+/* functions to work with background processes */
 
 int is_bg_proc(char **list)
 {
     int i = 0;
     while (list[i] != NULL) {
-        if (list[i][0] == '&')
-        {
-            rm_string(i, list);
-            return 1;
+        if (list[i][0] == '&' && list[i][1] == '\0') {
+            return i;
         }
         i++;
     }
     return 0;
 }
 
+void bg_proc_start(int bg_proc, char **list)
+{
+    if (bg_proc) {
+        printf("%s PID:%d\n", list[0], getpid());
+        free_string_in_list(bg_proc, list);
+    }
+}
+
+void bg_proc_wait(pid_t pid)
+{
+    pid_t status, child;
+    child = waitpid(pid, &status, WNOHANG);
+    if (child != -1 && child != 0) {
+        printf("%d ended ", child);
+        if (!status) {
+            puts("succesful");
+        } else {
+            puts("bad");
+        }
+    }
+}
+
+/*functions to change input and output */
+
 ssize_t change_IO(char **list)
 {
-    ssize_t fd = 0;
+    ssize_t fd, io;
     int i = 0;
     char ch;
     while (list[i] != NULL) {
@@ -199,39 +224,66 @@ ssize_t change_IO(char **list)
             ch = list[i][1];
             if (ch == '>') {
                 fd = open(list[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0755);
-                if (fd < 0) {
-                    free_list(list);
-                    err(1, NULL);
-                }
-                dup2(fd, STDOUT_FILENO);
+                io = STDOUT_FILENO;
             } else {
                 fd = open(list[i + 1], O_RDONLY);
-                if (fd < 0) {
-                    free_list(list);
-                    err(1, NULL);
-                }
-                dup2(fd, STDIN_FILENO);
+                io = STDIN_FILENO;
             }
-            rm_string(i, list); // remove ">" or "<"
-            rm_string(i, list); // remove opened file name
+            if (fd < 0) {
+                free_list(list);
+                err(1, NULL);
+            }
+            dup2(fd, io);
+            free_string_in_list(i, list); // remove ">" or "<"
+            free_string_in_list(i, list); // remove opened file name
             return fd;
         }
         i++;
     }
-    return fd;
+    return 0;
+}
+
+/* functions to change directory */
+
+int change_dir(char **list)
+{
+    return 1;
+    if (strcmp(list[0], "cd")) {
+        return EXIT_FAILURE;
+    }
+    //char parent[200];
+    //getcwd(parent, 200);
+    if (!list[1] || list[1][0] == '~') {
+        //chdir(getenv("HOME"));
+    } else if (!strcmp(list[1], "..")){
+        
+    }
+    return EXIT_SUCCESS;
+}
+
+/* other function */
+
+void new_line(void)
+{
+    char pc_name[_SC_HOST_NAME_MAX];
+    if (gethostname(pc_name, _SC_HOST_NAME_MAX)) {
+        err(1, NULL);
+    }
+    printf(PURPLE"%s@%s" RESET ":" BLUE "%s"RESET"$ ", getenv("USER"), pc_name, getenv("PWD"));
 }
 
 /* function to execute commands */
 
-void execute(char **list)
+void execute(int bg_proc, char **list)
 {
     ssize_t fd, fd2;
+    bg_proc_start(bg_proc, list);
     fd = change_IO(list); // check for special symbols like "<" or ">"
     fd2 = change_IO(list); // check for the second one
     if (execvp(list[0], list) < 0) {
+        free_list(list);
         err(1, NULL);
     }
-    free_list(list);
     if (fd != 0) {
         close(fd);
     }
@@ -240,103 +292,39 @@ void execute(char **list)
     }
 }
 
-void print_list(char **list)
-{
-    int i = 0;
-    while (list[i] != NULL) {
-        puts(list[i]);
-        printf("V%d\n", i + 1);
-        i++;
-    }
-}
-
-void print_list_list(char ***list)
-{
-    int i = 0;
-    while (list[i] != NULL) {
-        print_list(list[i]);
-        printf("%d\n", i + 1);
-        i++;
-    }
-}
-
-void create_pipe(int i, int **pd)
-{
-    if (!ispipe) {
-        return;
-    }
-    if (!(i % 2)) {
-        dup2(pd[i][STDIN_FILENO], 0);
-    } else {
-        dup2(pd[i][STDOUT_FILENO], 1);        
-    }
-    close(pd[i][STDIN_FILENO]);
-    close(pd[i][STDOUT_FILENO]);
-    return;
-}
-
-void wait_bg_proc(int bg_proc_count)
-{
-    for (int i = 0; i < bg_proc_count; i++)
-    {
-        wait(NULL);
-    }
-}
-
-void start_line(void)
-{
-    char hostname[_SC_HOST_NAME_MAX];
-    if (gethostname(hostname, _SC_HOST_NAME_MAX)) {
-        err(1, NULL);
-    }
-    printf("\033[1;32m%s@%s\033[0m:\033[1;34m%s\033[0m$ ",
-            getenv("USER"), hostname, getenv("PWD"));
-}
-
 int execcat(void)
 {
-//  int (*pd)[2];
-    pid_t pid;
-    int i, j, cmds, bg_proc_count = 0;
+    pid_t pid = -1;
+    int i, cmds, bg_proc = 0;
     char ***catalog = NULL;
     while (1) {
-        start_line();
+        new_line();
         catalog = get_catalog(&cmds);
         if (!catalog) {
             err(1, "failed to create catalog");
         }
         if (catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
             free_catalog(catalog);
-            wait_bg_proc(bg_proc_count);
             return EXIT_SUCCESS;
         }
         i = 0;
-        while (catalog[i] != NULL) {
-//            if (!(pipe(pd[pipes - 1])) && !(pipe(pd[pipes]))) {
-//                free_catalog(catalog);
-//                err(1, "failed to create a pipe");
-//            }
-            j = is_bg_proc(catalog[cmds]);
-            bg_proc_count += j;
-            pid = fork();
-            if (pid < 0) {
+        while (catalog[i] != NULL && change_dir(catalog[i])) {
+            bg_proc = is_bg_proc(catalog[cmds]);
+            if ((pid = fork()) < 0) {
                 free_catalog(catalog);
                 err(1, NULL);
             }
-            if (pid == 0) { // execute in child process
-                if (j) {
-                    printf("[%d]    %d\n", bg_proc_count, getpid());
-                }
-                execute(catalog[i]);
+            if (!pid) { // child process
+                execute(bg_proc, catalog[i]);
                 return EXIT_SUCCESS; // close child process
             }
-            if (1) {
+            if (!bg_proc) {
                 wait(NULL); // waiting for child to end his process
             }
             i++;
-            j++;
         }
         free_catalog(catalog);
+        bg_proc_wait(pid);
     }
     return EXIT_FAILURE;
 }
