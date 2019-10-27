@@ -11,8 +11,17 @@ change i/0:
   4) >">txt" >b.txt <a.txt: done
   
 Pipes:
-  1) pipes: 1%(maybe) done
+  1) pipes: 50%(maybe) done
 
+Background process:
+  1) >BG wait function: done
+  2) >BG start function: done
+  3) print pid early than the new line 
+  
+New line: done
+  
+Change Directory:
+  
 General:
   1) size of functions less than 25 line: almost done(main, get_word, special_case)
   2) find memory leaks that not show up by sanitize
