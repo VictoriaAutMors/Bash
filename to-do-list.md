@@ -22,7 +22,9 @@ Background process:
 
 
 >Change Directory:done
-
+  1) >cd ~ or cd: done
+  2) >cd ..: done
+  3) >cd name/: done
 signals:
 
 General:
