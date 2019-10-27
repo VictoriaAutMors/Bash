@@ -1,8 +1,8 @@
-lexemes: >done
+lexemes:  >done
   1) >get word: done
   2) >get list: done
 
-execute: >done
+execute:  >done
 
 change i/0: >done
   1) >'>'a.txt && > a.txt: done
@@ -18,9 +18,9 @@ Background process:
   2) >BG start function: done
   3) print pid early than the new line 
   
-New line: >done
+New line:  >done
   
-Change Directory: >done
+Change Directory:  >done
 
 signals:
 
