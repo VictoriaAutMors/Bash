@@ -1,10 +1,10 @@
-lexemes: done
+lexemes: >done
   1) >get word: done
   2) >get list: done
 
-execute: done
+execute: >done
 
-change i/0:
+change i/0: >done
   1) >'>'a.txt && > a.txt: done
   2) >'>'b.txt <a.txt: done
   3) >'>'b.txt "sm text" < a.txt: done
@@ -18,10 +18,12 @@ Background process:
   2) >BG start function: done
   3) print pid early than the new line 
   
-New line: done
+New line: >done
   
-Change Directory:
-  
+Change Directory: >done
+
+signals:
+
 General:
   1) size of functions less than 25 line: almost done(main, get_word, special_case)
   2) find memory leaks that not show up by sanitize
