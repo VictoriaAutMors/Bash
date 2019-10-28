@@ -8,10 +8,14 @@
 #include <limits.h>
 #include <math.h>
 #include <pwd.h>
+#include <signal.h>
+#include <time.h>
 
 #define PURPLE "\033[38;5;141m"
 #define BLUE "\033[38;5;57m "
 #define RESET "\033[0m"
+
+pid_t pid = -1;
 
 /* functions to free heap after program execution*/
 
@@ -177,6 +181,26 @@ char ***get_catalog(int *cmds)
     return catalog;
 }
 
+void print(int num)
+{
+    if (num == 0) {
+        return;
+    }
+    print(num / 10);
+    char ch = num % 10 + '0';
+    if (write(STDOUT_FILENO, &ch, 1) < 0) {
+        err(STDOUT_FILENO, NULL);
+        return;
+    }
+}
+
+void write_out(char *string)
+{
+    if (!write(STDOUT_FILENO, string, strlen(string))) {
+        err(1, NULL);
+    }
+}
+
 /* functions to work with background processes */
 
 int is_bg_proc(char **list)
@@ -194,7 +218,10 @@ int is_bg_proc(char **list)
 void bg_proc_start(int bg_proc, char **list)
 {
     if (bg_proc) {
-        printf("%s PID:%d\n", list[0], getpid());
+        write_out(list[0]);
+        write_out(" PID: ");
+        print(getpid());
+        write_out("\n");
         free_string_in_list(bg_proc, list);
     }
 }
@@ -204,11 +231,13 @@ void bg_proc_wait(pid_t pid)
     pid_t status, child;
     child = waitpid(pid, &status, WNOHANG);
     if (child != -1 && child != 0) {
-        printf("%d ended ", child);
+        print(child);
         if (!status) {
-            puts("succesful");
+            puts(" ended succesful");
+        } else if (WIFSIGNALED(status)){
+            psignal(WTERMSIG(status), " ended due to");
         } else {
-            puts("bad");
+            puts(" ended bad");
         }
     }
 }
@@ -272,12 +301,12 @@ int change_dir(char **list)
 
 void new_line(void)
 {
-    char pc_name[HOST_NAME_MAX], login[LOGIN_NAME_MAX];
-    char cwd[4096];
-    if (getlogin_r(login, LOGIN_NAME_MAX)) {
+    char pc_name[_POSIX_HOST_NAME_MAX], login[_POSIX_LOGIN_NAME_MAX];
+    char cwd[_POSIX_ARG_MAX];
+    if (getlogin_r(login, _POSIX_LOGIN_NAME_MAX)) {
         err(1, "failed to get username");
     }
-    if (gethostname(pc_name, HOST_NAME_MAX)) {
+    if (gethostname(pc_name, _POSIX_HOST_NAME_MAX)) {
         err(1, "failed to get host name");
     }
     if (!getcwd(cwd, sizeof(cwd))) {
@@ -308,7 +337,6 @@ void execute(int bg_proc, char **list)
 
 int execcat(void)
 {
-    pid_t pid = -1;
     int i, cmds, bg_proc = 0;
     char ***catalog = NULL;
     while (1) {
@@ -343,8 +371,17 @@ int execcat(void)
     return EXIT_FAILURE;
 }
 
+void handler(void)
+{
+    if (pid > 1) {
+        kill(pid, SIGKILL);
+    }
+    putchar('\n');
+}
+
 int main(void)
 {
+    signal(SIGINT, (void (*)(int))handler);
     if(execcat()) {
         return EXIT_FAILURE;
     }
