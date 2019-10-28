@@ -11,6 +11,9 @@
 #include <signal.h>
 #include <time.h>
 
+#define TRUE 1
+#define FALSE 0
+
 #define PURPLE "\033[38;5;141m"
 #define BLUE "\033[38;5;57m "
 #define RESET "\033[0m"
@@ -22,18 +25,20 @@ pid_t pid = -1;
 void free_string_in_list(int num, char **list)
 {
     free(list[num]);
-    while (list[num + 1] != NULL) { /* pushing i's string to the end of the list */
+    while (list[num + 1] != NULL)  // pushing i's string to the end of the list
+    {
         list[num] = list[num + 1];
         num++;
     }
-    list[num] = NULL; // set new end of the list
+    list[num] = NULL;    // set new end of the list
     free(list[num + 1]); // free previous end of the list
 }
 
 void free_list(char **list)
 {
     int i = 0;
-    while (list[i] != NULL) {
+    while (list[i] != NULL)
+    {
         free(list[i]);
         i++;
     }
@@ -44,7 +49,8 @@ void free_list(char **list)
 void free_catalog(char ***catalog)
 {
     int i = 0;
-    while (catalog[i] != NULL) {
+    while (catalog[i] != NULL)
+    {
         free_list(catalog[i]);
         i++;
     }
@@ -61,15 +67,18 @@ int is_special_symbol(char ch)
 
 char *get_quote(char mark)
 {
-    if (mark != '"') {
+    if (mark != '"')
+    {
         return NULL;
     }
     int i = 0;
     char ch, *word = NULL;
-    do {
+    do
+    {
         ch = getchar();
         word = (char *)realloc(word, (i + 1) * sizeof(char));
-        if (word == NULL) {
+        if (word == NULL)
+        {
             err(1, NULL);
         }
         word[i] = ch;
@@ -81,7 +90,8 @@ char *get_quote(char mark)
 
 char get_first_letter(char ch)
 {
-    while (ch == ' ' || ch == '\t') {
+    while (ch == ' ' || ch == '\t')
+    {
         ch = getchar(); // get symbols until it not a letter or '\n'
     }
     return ch;
@@ -89,9 +99,11 @@ char get_first_letter(char ch)
 
 char *separate_symbol_word(char ch, char *end)
 {
-    if (is_special_symbol(ch)) {
+    if (is_special_symbol(ch))
+    {
         char *word = (char *)calloc(3, sizeof(char));
-        if (word == NULL) {
+        if (word == NULL)
+        {
             err(1, "failed to allocate memory in separate symbol and word");
         }
         word[1] = ch;
@@ -104,7 +116,8 @@ char *separate_symbol_word(char ch, char *end)
 char *word_special_case(char ch, char *end)
 {
     char *word = get_quote(ch);
-    if (word) {
+    if (word)
+    {
         return word;
     }
     word = separate_symbol_word(ch, end);
@@ -113,26 +126,32 @@ char *word_special_case(char ch, char *end)
 
 char *get_word(char *end)
 {
-    if (*end == '\n' || *end == '|') { // no more lexemes
+    if (*end == '\n' || *end == '|') // no more lexemes
+    { 
         return NULL;
     }
     int i = 0;
     char ch, *word = NULL;
-    do {
+    do
+    {
         ch = getchar();
-        if (!i) {
+        if (!i)
+        {
             ch = get_first_letter(ch);
-            if (ch == '\n' || ch == '|') {
+            if (ch == '\n' || ch == '|')
+            {
                 *end = ch;
                 return NULL;
             }
             word = word_special_case(ch, end);
-            if (word) {
+            if (word)
+            {
                 return word;
             }
         }
         word = (char *)realloc(word, (i + 1) * sizeof(char));
-        if (word == NULL) {
+        if (word == NULL)
+        {
             err(1, "failed reallocate memory in get word");
         }
         word[i] = ch;
@@ -145,20 +164,24 @@ char *get_word(char *end)
 
 char **get_list(char *end_of_line)
 {
-    if (*end_of_line == '\n') {
+    if (*end_of_line == '\n')
+    {
         return NULL;
     }
     char end = 0, **list = NULL, **check = NULL;
     int i = 0;
-    do {
+    do
+    {
         check = (char **)realloc(list, (i + 1) * sizeof(char *));
-        if (check == NULL) {
+        if (check == NULL)
+        {
             free_list(list);
             err(1, NULL);
         }
         list = check;
         list[i] = get_word(&end);
-        if (!list[0]) {
+        if (!list[0])
+        {
             free_list(list);
             return NULL;
         }
@@ -172,7 +195,8 @@ char ***get_catalog(int *cmds)
 {
     char end_of_line = 0, ***catalog = NULL;
     int i = 0;
-    do {
+    do
+    {
         catalog = (char ***)realloc(catalog, (i + 1) * sizeof(char **));
         catalog[i] = get_list(&end_of_line);
         i++;
@@ -181,14 +205,16 @@ char ***get_catalog(int *cmds)
     return catalog;
 }
 
-void print(int num)
+void write_int(int num)
 {
-    if (num == 0) {
+    if (num == 0)
+    {
         return;
     }
-    print(num / 10);
+    write_int(num / 10);
     char ch = num % 10 + '0';
-    if (write(STDOUT_FILENO, &ch, 1) < 0) {
+    if (write(STDOUT_FILENO, &ch, 1) < 0)
+    {
         err(STDOUT_FILENO, NULL);
         return;
     }
@@ -196,7 +222,8 @@ void print(int num)
 
 void write_out(char *string)
 {
-    if (!write(STDOUT_FILENO, string, strlen(string))) {
+    if (!write(STDOUT_FILENO, string, strlen(string)))
+    {
         err(1, NULL);
     }
 }
@@ -206,39 +233,57 @@ void write_out(char *string)
 int is_bg_proc(char **list)
 {
     int i = 0;
-    while (list[i] != NULL) {
-        if (list[i][0] == '&' && list[i][1] == '\0') {
+    while (list[i] != NULL)
+    {
+        if (list[i][0] == '&' && list[i][1] == '\0')
+        {
             return i;
         }
         i++;
     }
-    return 0;
+    return FALSE;
 }
 
-void bg_proc_start(int bg_proc, char **list)
+void bg_proc_start(int bg_proc_flag, char **list)
 {
-    if (bg_proc) {
-        write_out(list[0]);
-        write_out(" PID: ");
-        print(getpid());
+    if (bg_proc_flag)
+    {
+        write_out("[");
+        write_int(bg_proc_count);
+        write_out("]    ");
+        write_int(getpid());
         write_out("\n");
-        free_string_in_list(bg_proc, list);
+        free_string_in_list(bg_proc_flag, list);
     }
 }
 
-void bg_proc_wait(pid_t pid)
+void bg_proc_check(pid_t pid, int *count)
 {
     pid_t status, child;
     child = waitpid(pid, &status, WNOHANG);
-    if (child != -1 && child != 0) {
-        print(child);
-        if (!status) {
+    if (child != -1 && child != 0)
+    {
+        write_out("[");
+        write_int(*count);
+        write_out("]+   ");
+        write_int(child);
+        if (!status)
+        {
             puts(" ended succesful");
-        } else if (WIFSIGNALED(status)){
+        } else if (WIFSIGNALED(status)) {
             psignal(WTERMSIG(status), " ended due to");
         } else {
             puts(" ended bad");
         }
+        *count -= 1;
+    }
+}
+
+void bg_proc_wait(int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        wait(NULL);
     }
 }
 
@@ -249,17 +294,21 @@ ssize_t change_IO(char **list)
     ssize_t fd, io;
     int i = 0;
     char ch;
-    while (list[i] != NULL) {
-        if (!list[i][0]) {
+    while (list[i] != NULL)
+    {
+        if (!list[i][0])
+        {
             ch = list[i][1];
-            if (ch == '>') {
+            if (ch == '>')
+            {
                 fd = open(list[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0755);
                 io = STDOUT_FILENO;
             } else {
                 fd = open(list[i + 1], O_RDONLY);
                 io = STDIN_FILENO;
             }
-            if (fd < 0) {
+            if (fd < 0)
+            {
                 free_list(list);
                 err(1, NULL);
             }
@@ -275,105 +324,183 @@ ssize_t change_IO(char **list)
 
 /* functions to change directory */
 
-int change_dir(char **list)
+int is_change_dir(char **list)
 {
-    if (strcmp(list[0], "cd")) {
-        return EXIT_FAILURE;
+    if (strcmp(list[0], "cd"))
+    {
+        return FALSE;
     }
-    if (!list[1] || list[1][0] == '~') {
+    if (!list[1] || list[1][0] == '~') // change directory to home directory
+    {
         uid_t uid = getuid();
         struct passwd *pw = getpwuid(uid);
-        if (pw == NULL) {
+        if (pw == NULL)
+        {
             err(1, NULL);
         }
-        if (chdir(pw -> pw_dir)) {
+        if (chdir(pw->pw_dir))
+        {
             perror("failed to change directory");
         }
     } else {
-        if (chdir(list[1])) {
-            perror("failed to chaneg directory");
+        if (chdir(list[1]))
+        {
+            perror("failed to change directory");
         }
     }
-    return EXIT_SUCCESS;
+    return TRUE;
 }
 
-/* other function */
+/* functions that work with pipes */
+
+void pipe_close(int (*pipd)[2], int num)
+{
+    if (close(pipd[num][0]) < 0)
+    {
+        err(1, "failed to close pipe %d", num);
+    }
+    if (close(pipd[num][1]) < 0)
+    {
+        err(1, "failed to close pipe %d", num);
+    }
+}
+
+void pipe_initialize(int (*pipd)[2], int cmds, int i)
+{
+    if (cmds == 0)
+    { // no pipes in our command
+        return;
+    }
+    if (i)
+    {
+        dup2(pipd[i - 1][0], 0);
+    }
+    if (i != cmds)
+    {
+        dup2(pipd[i][1], 1);
+    }
+}
+
+/* other functions */
 
 void new_line(void)
 {
     char pc_name[_POSIX_HOST_NAME_MAX], login[_POSIX_LOGIN_NAME_MAX];
     char cwd[_POSIX_ARG_MAX];
-    if (getlogin_r(login, _POSIX_LOGIN_NAME_MAX)) {
+    if (getlogin_r(login, _POSIX_LOGIN_NAME_MAX))
+    {
         err(1, "failed to get username");
     }
-    if (gethostname(pc_name, _POSIX_HOST_NAME_MAX)) {
+    if (gethostname(pc_name, _POSIX_HOST_NAME_MAX))
+    {
         err(1, "failed to get host name");
     }
-    if (!getcwd(cwd, sizeof(cwd))) {
+    if (!getcwd(cwd, sizeof(cwd)))
+    {
         err(1, "failed to get path to current directory");
     }
-    printf(PURPLE"%s@%s" RESET ":" BLUE "%s"RESET"$ ", login, pc_name, cwd);
+    printf(PURPLE "%s@%s" RESET ":" BLUE "%s" RESET "$ ", login, pc_name, cwd);
 }
 
 /* function to execute commands */
 
-void execute(int bg_proc, char **list)
+int is_endline(char ***catalog, int bg_proc_count)
+{
+    if (!catalog[0]) 
+    { // line consist only '\n'
+        return FALSE;
+    }
+    if ((!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit")))
+    {
+        bg_proc_wait(bg_proc_count);
+        free_catalog(catalog);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void execute(int bg_proc_flag, char **list)
 {
     ssize_t fd, fd2;
-    bg_proc_start(bg_proc, list);
-    fd = change_IO(list); // check for special symbols like "<" or ">"
+    bg_proc_start(bg_proc_flag, list);
+    fd = change_IO(list);  // check for special symbols like "<" or ">"
     fd2 = change_IO(list); // check for the second one
-    if (execvp(list[0], list) < 0) {
+    if (execvp(list[0], list) < 0)
+    {
         free_list(list);
         err(1, NULL);
     }
-    if (fd != 0) {
+    if (fd != 0)
+    {
         close(fd);
     }
-    if (fd2 != 0) {
+    if (fd2 != 0)
+    {
         close(fd2);
     }
 }
 
 int execcat(void)
 {
-    int i, cmds, bg_proc = 0;
+    int i, cmds, bg_proc_flag = 0, bg_proc_count = 0;
     char ***catalog = NULL;
-    while (1) {
+    while (1)
+    {
         new_line();
         catalog = get_catalog(&cmds);
-        if (!catalog) {
+        if (!catalog)
+        {
             err(1, "failed to create catalog");
         }
-        if (catalog[0] != NULL && (!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
-            free_catalog(catalog);
+        if (is_endline)
+        {
             return EXIT_SUCCESS;
         }
+        int pipd[cmds + 2][2];
         i = 0;
-        while (catalog[i] != NULL && change_dir(catalog[i])) {
-            bg_proc = is_bg_proc(catalog[cmds]);
-            if ((pid = fork()) < 0) {
+        while (catalog[i] != NULL && is_change_dir(catalog[i]) != TRUE)
+        {
+            bg_proc_flag = is_bg_proc(catalog[cmds]);
+            bg_proc_count += bg_proc_flag;
+            if (i != cmds && pipe(pipd[i]) < 0)
+            {
+                err(1, "failed to create pipe");
+            }
+            if ((pid = fork()) < 0)
+            {
                 free_catalog(catalog);
                 err(1, NULL);
             }
-            if (!pid) { // child process
-                execute(bg_proc, catalog[i]);
+            if (!pid)
+            { // child process
+                pipe_initialize(pipd, cmds, i);
+                for (int j = 0; j != cmds && j < i; j++)
+                {
+                    pipe_close(pipd, j);
+                }
+                execute(bg_proc_flag, catalog[i]);
                 return EXIT_SUCCESS; // close child process
-            }
-            if (!bg_proc) {
-                wait(NULL); // waiting for child to end his process
             }
             i++;
         }
+        for (int j = 0; !bg_proc_flag && j < i; j++)
+        {
+            if (j != cmds)
+            {
+                pipe_close(pipd, j);
+            }
+            wait(NULL);
+        }
         free_catalog(catalog);
-        bg_proc_wait(pid);
+        bg_proc_check(pid, &bg_proc_count);
     }
     return EXIT_FAILURE;
 }
 
 void handler(void)
 {
-    if (pid > 1) {
+    if (pid > 1)
+    {
         kill(pid, SIGKILL);
     }
     putchar('\n');
@@ -381,9 +508,8 @@ void handler(void)
 
 int main(void)
 {
+    int status = 0;
     signal(SIGINT, (void (*)(int))handler);
-    if(execcat()) {
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
+    status = execcat();
+    return status;
 }
