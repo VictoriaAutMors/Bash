@@ -11,7 +11,9 @@
   4) >">txt" >b.txt <a.txt: done
   
 Pipes:
-  1) pipes: 50%(maybe) done
+  1) pipes: 100%(maybe) done
+
+logical and(&&)| or(||)
 
 Background process:
   1) >BG wait function: done
@@ -26,9 +28,12 @@ Background process:
   2) >cd ..: done
   3) >cd name/: done
 signals:
+  1) pid list: done
+  2) 
 
 General:
   1) size of functions less than 25 line: almost done(main, get_word, special_case)
   2) find memory leaks that not show up by sanitize
   3) >organise to do list: done
   4) write comments in programm
+  5) replace lexemes list array to list
