@@ -101,12 +101,13 @@ Link pop(Link roster, pid_t pid) {
     {
         if (ptr -> next -> pid == pid)
         {
-            ptr = pop_front(ptr -> next);
+            ptr -> next = pop_front(ptr -> next);
+            return roster;
         }
         ptr = ptr -> next;
     }
     ptr -> next = pop_front(ptr -> next);
-    return ptr;
+    return roster;
 }
 
 /* functions to print */
@@ -124,6 +125,15 @@ void write_int(int num)
         err(1, NULL);
         return;
     }
+}
+
+void print(Link roster) {
+    putchar('[');
+    for (Link t = roster; t != NULL; t = t -> next) {
+        printf("%d ", t -> num);
+    }
+    putchar(']');
+    putchar('\n');
 }
 
 void write_out(char *string)
@@ -163,7 +173,7 @@ void fill_roster(char *name, int bg_proc_flag, int num, int pid)
 {
     if (!bg_proc_flag)
     {
-        return;
+        num = 0;
     }
     int len = strlen(name);
     char *tmp = (char *)malloc((len + 1) * sizeof(char));
@@ -209,11 +219,6 @@ Link del_proc_fm_roster(Link roster, pid_t pid, int status)
         write_out("     Ended Bad\n");
     }
     roster = pop(roster, pid);
-    if (!roster)
-    {
-        printf("L\n");
-    }
-    
     return roster;
 }
 
@@ -393,10 +398,20 @@ void bg_proc_start(char **list, int bg_proc_flag, int bg_proc_count)
     }
 }
 
-void bg_proc_check(int *count)
+void bg_proc_check(int *count, int bg_proc_flag)
 {
     pid_t status, child;
-    child = waitpid(-1, &status, WNOHANG);
+    if (!bg_proc_flag)
+    {
+        child = waitpid(-1, &status, 0);
+        if (child != -1 && !WIFSIGNALED(status))
+        {
+            proc_roster = pop(proc_roster, child);
+        }
+        return;
+    } else {
+        child = waitpid(-1, &status, WNOHANG);
+    }
     if (child != -1 && child != 0)
     {
         proc_roster = del_proc_fm_roster(proc_roster, child, status);
@@ -613,13 +628,14 @@ int execcat(void)
             fill_roster(catalog[i][0], bg_proc_flag, bg_proc_count, pid);
             i++;
         }
+        print(proc_roster);
         for (int j = 0; j <= i; j++)
         {
             if (j < cmds)
             {
                 pipe_close(pipd, j);
             }
-            bg_proc_check(&bg_proc_count);
+            bg_proc_check(&bg_proc_count, bg_proc_flag);
         }
         free_catalog(catalog);
     }
@@ -628,11 +644,18 @@ int execcat(void)
 
 void handler(void)
 {
-    if (pid > 1)
+    Link ptr = proc_roster;
+    while (ptr)
     {
-        kill(pid, SIGKILL);
+        if (ptr -> num == 0)
+        {
+            kill(ptr -> pid, SIGKILL);
+            proc_roster = pop(proc_roster, ptr -> pid);
+            ptr = proc_roster;
+        } else {
+            ptr = ptr -> next;
+        }
     }
-    putchar('\n');
 }
 
 int main(void)
