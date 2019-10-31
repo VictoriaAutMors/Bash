@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <math.h>
-#include <pwd.h>
 #include <signal.h>
 
 #define TRUE 1
@@ -27,7 +26,7 @@ struct node
     Link next;
 };
 
-pid_t pid = -1;
+char oldpwd[PATH_MAX];
 
 Link proc_roster = NULL;
 
@@ -222,9 +221,40 @@ Link del_proc_fm_roster(Link roster, pid_t pid, int status)
     return roster;
 }
 
+void print_list(char **list)
+{
+    int i = 0;
+    while (list[i] != NULL) {
+        printf("%s ", list[i]);
+        i++;
+    }
+}
+
+void print_list_list(char ***list)
+{
+    int i = 0;
+    while (list[i] != NULL) {
+        print_list(list[i]);
+        printf(" %d\n", i + 1);
+        i++;
+    }
+}
+
 // functions to work in special cases
 // like (quotes, change IO symbols, pipes etc)
 // when filling word 
+
+char *word_realloc(char *word, int size)
+{
+    char *tmp = NULL;
+    tmp = (char *)realloc(word, (size + 1) * sizeof(char));
+    if (tmp == NULL)
+    {
+        free(word);
+        err(1, "failed reallocate memory");
+    }
+    return tmp;
+}
 
 char *get_quote(char mark)
 {
@@ -237,11 +267,7 @@ char *get_quote(char mark)
     do
     {
         ch = getchar();
-        word = (char *)realloc(word, (i + 1) * sizeof(char));
-        if (word == NULL)
-        {
-            err(1, NULL);
-        }
+        word = word_realloc(word, i);
         word[i] = ch;
         i++;
     } while (ch != '"');
@@ -249,8 +275,9 @@ char *get_quote(char mark)
     return word;
 }
 
-char get_first_letter(char ch)
+char get_first_letter(void)
 {
+    char ch = getchar();
     while (ch == ' ' || ch == '\t')
     {
         ch = getchar(); // get symbols until it not a letter or '\n'
@@ -274,6 +301,43 @@ char *separate_io_word(char ch, char *end)
     return NULL;
 }
 
+char *get_lsymbol(char ch, char *end, int *is_l)
+{
+    char *word = malloc(2 * sizeof(char));
+    int i = 0;
+    word[i] = ch;
+    i++;
+    ch = getchar();
+    if (ch == '\n')
+    {
+        word[i] = '\0';
+        *end = ch;
+        return word;
+    }
+    if (ch == '&')
+    {
+        word[i] = ch;
+        i++;
+        ch = getchar();
+        if (ch == ' ' || ch == '\t')
+        {
+            free(word);
+            *is_l = 1;
+            *end = '&';
+            return NULL;
+        }
+    }
+    while (ch != ' ' && ch != '\t' && ch != '\n')
+    {
+        word = word_realloc(word, i);
+        word[i] = ch;
+        i++;
+        ch = getchar();
+    }
+    *end = ch;
+    return word;
+}
+
 char *word_special_case(char ch, char *end)
 {
     char *word = get_quote(ch);
@@ -287,7 +351,7 @@ char *word_special_case(char ch, char *end)
 
 /*  functions to fill arrays*/
 
-char *get_word(char *end)
+char *get_word(char *end, int *is_l)
 {
     if (*end == '\n' || *end == '|') // no more lexemes
     {
@@ -295,37 +359,39 @@ char *get_word(char *end)
     }
     int i = 0;
     char ch, *word = NULL;
-    do
+    ch = get_first_letter();
+    if (ch == '\n' || ch == '|')
     {
-        ch = getchar();
-        if (!i)
+        *end = ch;
+        return NULL;
+    }
+    word = word_special_case(ch, end);
+    if (word)
+    {
+        return word;
+    }
+    if (ch == '&')
+    {
+        word = get_lsymbol(ch, end, is_l);
+        if (word || is_l)
         {
-            ch = get_first_letter(ch);
-            if (ch == '\n' || ch == '|')
-            {
-                *end = ch;
-                return NULL;
-            }
-            word = word_special_case(ch, end);
-            if (word)
-            {
-                return word;
-            }
+            return word;
         }
-        word = (char *)realloc(word, (i + 1) * sizeof(char));
-        if (word == NULL)
-        {
-            err(1, "failed reallocate memory in get word");
-        }
+    }
+    while (ch != ' ' && ch != '\t' && ch != '\n' && ch != '|' && ch != '&')
+    {
+        word = word_realloc(word, i);
         word[i] = ch;
         i++;
-    } while (ch != ' ' && ch != '\t' && ch != '\n' && ch != '|');
-    word[i - 1] = '\0'; // set end of the lexeme
+        ch = getchar();
+    }
+    word = word_realloc(word, i);
+    word[i] = '\0'; // set end of the lexeme
     *end = ch;
     return word;
 }
 
-char **get_list(char *end_of_line)
+char **get_list(char *end_of_line, int *is_l)
 {
     if (*end_of_line == '\n')
     {
@@ -342,7 +408,7 @@ char **get_list(char *end_of_line)
             err(1, NULL);
         }
         list = check;
-        list[i] = get_word(&end);
+        list[i] = get_word(&end, is_l);
         if (!list[0])
         {
             free_list(list);
@@ -354,14 +420,14 @@ char **get_list(char *end_of_line)
     return list;
 }
 
-char ***get_catalog(int *cmds)
+char ***get_catalog(int *cmds, int *is_l)
 {
     char end_of_line = 0, ***catalog = NULL;
     int i = 0;
     do
     {
         catalog = (char ***)realloc(catalog, (i + 1) * sizeof(char **));
-        catalog[i] = get_list(&end_of_line);
+        catalog[i] = get_list(&end_of_line, is_l);
         i++;
     } while (catalog[i - 1] != NULL);
     *cmds = i - 2;
@@ -403,10 +469,17 @@ void bg_proc_check(int *count, int bg_proc_flag)
     pid_t status, child;
     if (!bg_proc_flag)
     {
-        child = waitpid(-1, &status, 0);
-        if (child != -1 && !WIFSIGNALED(status))
+        Link ptr = proc_roster;
+        while (ptr)
         {
-            proc_roster = pop(proc_roster, child);
+            if (ptr -> num == 0)
+            {
+                waitpid(ptr -> pid, &status, 0);
+                proc_roster = pop(proc_roster, ptr -> pid);
+                ptr = proc_roster;
+            } else {
+                ptr = ptr -> next;
+            }
         }
         return;
     } else {
@@ -464,29 +537,50 @@ ssize_t change_IO(char **list)
 
 /* functions to change directory */
 
+void get_cwd(char *wd)
+{
+    if (!getcwd(wd, PATH_MAX))
+    {
+        err(1, NULL);
+    }
+}
+
+void change_dir(char *path)
+{
+    if (path == NULL)
+    {
+        perror(NULL);
+    } else if (chdir(path)) {
+        perror("failed to change directory");
+    }
+}
+
+void change_old_dir(char *oldpwd)
+{
+    char tmp[PATH_MAX];
+    strcpy(tmp, oldpwd);
+    get_cwd(oldpwd);
+    printf("%s\n", tmp);
+    change_dir(tmp);
+}
+
 int is_change_dir(char **list)
 {
     if (strcmp(list[0], "cd"))
     {
         return FALSE;
     }
+    char *path = NULL;
     if (!list[1] || list[1][0] == '~') // change directory to home directory
     {
-        uid_t uid = getuid();
-        struct passwd *pw = getpwuid(uid);
-        if (pw == NULL)
-        {
-            err(1, NULL);
-        }
-        if (chdir(pw->pw_dir))
-        {
-            perror("failed to change directory");
-        }
+        path = getenv("HOME");
+        get_cwd(oldpwd);
+        change_dir(path);
+    } else if (list[1][0] == '-'){
+        change_old_dir(oldpwd);
     } else {
-        if (chdir(list[1]))
-        {
-            perror("failed to change directory");
-        }
+        get_cwd(oldpwd);
+        change_dir(list[1]);
     }
     return TRUE;
 }
@@ -527,23 +621,37 @@ void pipe_initialize(int (*pipd)[2], int cmds, int i)
 
 /* other functions */
 
+void print_line(char *login, char *pc_name, char *cwd)
+{
+    write_out(PURPLE);
+    write_out(login);
+    write_out("@");
+    write_out(pc_name);
+    write_out(RESET);
+    write_out(":");
+    write_out(BLUE);
+    write_out(cwd);
+    write_out(RESET);
+    write_out("$ ");
+}
+
 void new_line(void)
 {
-    char pc_name[_POSIX_HOST_NAME_MAX], login[_POSIX_LOGIN_NAME_MAX];
-    char cwd[_POSIX_ARG_MAX];
-    if (getlogin_r(login, _POSIX_LOGIN_NAME_MAX))
+    char pc_name[HOST_NAME_MAX], login[LOGIN_NAME_MAX];
+    char cwd[PATH_MAX];
+    if (getlogin_r(login, LOGIN_NAME_MAX))
     {
         err(1, "failed to get username");
     }
-    if (gethostname(pc_name, _POSIX_HOST_NAME_MAX))
+    if (gethostname(pc_name, HOST_NAME_MAX))
     {
         err(1, "failed to get host name");
     }
-    if (!getcwd(cwd, sizeof(cwd)))
+    if (!getcwd(cwd, PATH_MAX))
     {
         err(1, "failed to get path to current directory");
     }
-    printf(PURPLE "%s@%s" RESET ":" BLUE "%s" RESET "$ ", login, pc_name, cwd);
+    print_line(login, pc_name, cwd);
 }
 
 /* function to execute commands */
@@ -586,12 +694,15 @@ void execute(char **list, int bg_proc_flag, int bg_proc_count)
 
 int execcat(void)
 {
-    int i, cmds, bg_proc_flag = 0, bg_proc_count = 0;
+    int i, cmds, bg_proc_flag = 0, bg_proc_count = 0, is_l = 0;
+    pid_t pid;
     char ***catalog = NULL;
     while (1)
     {
         new_line();
-        catalog = get_catalog(&cmds);
+        is_l = 0;
+        catalog = get_catalog(&cmds, &is_l);
+        print_list_list(catalog);
         if (!catalog)
         {
             err(1, "failed to create catalog");
@@ -606,7 +717,7 @@ int execcat(void)
         {
             bg_proc_flag = is_bg_proc(catalog[cmds]);
             bg_proc_count += bg_proc_flag;
-            if (i != cmds && pipe(pipd[i]) < 0)
+            if (i != cmds && !is_l && pipe(pipd[i]) < 0)
             {
                 err(1, "failed to create pipe");
             }
@@ -618,7 +729,7 @@ int execcat(void)
             if (!pid)
             { // child process
                 pipe_initialize(pipd, cmds, i);
-                for (int j = 0; j != cmds && j < i; j++)
+                for (int j = 0; j != cmds && j < i && !is_l; j++)
                 {
                     pipe_close(pipd, j);
                 }
@@ -626,12 +737,17 @@ int execcat(void)
                 return EXIT_SUCCESS; // close child process
             }
             fill_roster(catalog[i][0], bg_proc_flag, bg_proc_count, pid);
+            if (is_l)
+            {
+                int status;
+                wait(&status);
+                printf("%d\n", WEXITSTATUS(status));
+            }
             i++;
         }
-        print(proc_roster);
         for (int j = 0; j <= i; j++)
         {
-            if (j < cmds)
+            if (j < cmds && !is_l)
             {
                 pipe_close(pipd, j);
             }
@@ -645,6 +761,8 @@ int execcat(void)
 void handler(void)
 {
     Link ptr = proc_roster;
+    write_out("\n");
+    new_line();
     while (ptr)
     {
         if (ptr -> num == 0)
