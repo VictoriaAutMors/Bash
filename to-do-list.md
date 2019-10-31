@@ -27,9 +27,10 @@ Background process:
   1) >cd ~ or cd: done
   2) >cd ..: done
   3) >cd name/: done
+  4) >cd -: done
 signals:
   1) pid list: done
-  2) 
+  2) signal to wait 
 
 General:
   1) size of functions less than 25 line: almost done(main, get_word, special_case)
@@ -37,3 +38,4 @@ General:
   3) >organise to do list: done
   4) write comments in programm
   5) replace lexemes list array to list
+  6) optimize the program 
