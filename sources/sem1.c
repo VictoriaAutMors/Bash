@@ -35,8 +35,7 @@ Link proc_roster = NULL;
 void free_list(char **list)
 {
     int i = 0;
-    while (list[i] != NULL)
-    {
+    while (list[i] != NULL) {
         free(list[i]);
         i++;
     }
@@ -47,8 +46,7 @@ void free_list(char **list)
 void free_roster(Link roster)
 {
     Link tmp;
-    while (roster != NULL)
-    {
+    while (roster != NULL) {
         tmp = roster;
         roster = roster -> next;
         free(tmp -> name);
@@ -59,8 +57,7 @@ void free_roster(Link roster)
 void free_catalog(char ***catalog)
 {
     int i = 0;
-    while (catalog[i] != NULL)
-    {
+    while (catalog[i] != NULL) {
         free_list(catalog[i]);
         i++;
     }
@@ -73,12 +70,12 @@ void free_catalog(char ***catalog)
 void del_string_in_list(int num, char **list)
 {
     free(list[num]);
-    while (list[num + 1] != NULL)  // pushing i's string to the end of the list
-    {
+    while (list[num + 1] != NULL) {
+        // pushing i's string to the end of the list
         list[num] = list[num + 1];
         num++;
     }
-    list[num] = NULL;    // set new end of the list
+    list[num] = NULL;     // set new end of the list
     free(list[num + 1]); // free previous end of the list
 }
 
@@ -91,15 +88,15 @@ Link pop_front(Link ptr)
 }
 
 Link pop(Link roster, pid_t pid) {
-    if (roster -> next == NULL)
-    {
+    if (roster == NULL) {
+        return NULL;
+    }
+    if (roster -> next == NULL || roster -> pid == pid) {
         return pop_front(roster);
     }
     Link ptr = roster;
-    while (ptr -> next -> next != NULL)
-    {
-        if (ptr -> next -> pid == pid)
-        {
+    while (ptr -> next -> next != NULL) {
+        if (ptr -> next -> pid == pid) {
             ptr -> next = pop_front(ptr -> next);
             return roster;
         }
@@ -113,14 +110,12 @@ Link pop(Link roster, pid_t pid) {
 
 void write_int(int num)
 {
-    if (num == 0)
-    {
+    if (num == 0) {
         return;
     }
     write_int(num / 10);
     char ch = num % 10 + '0';
-    if (write(STDOUT_FILENO, &ch, 1) < 0)
-    {
+    if (write(STDOUT_FILENO, &ch, 1) < 0) {
         err(1, NULL);
         return;
     }
@@ -137,8 +132,7 @@ void print(Link roster) {
 
 void write_out(char *string)
 {
-    if (!write(STDOUT_FILENO, string, strlen(string)))
-    {
+    if (!write(STDOUT_FILENO, string, strlen(string))) {
         err(1, NULL);
     }
 }
@@ -155,30 +149,26 @@ Link push_front(Link roster, int num, pid_t pid, char *name) {
 }
 
 Link push_back(Link roster, int num, pid_t pid, char *name) {
-    if (roster == NULL)
-    {
+    if (roster == NULL) {
         return push_front(roster, num, pid, name);
     }
     Link ptr = roster;
-    while (ptr -> next != NULL)
-    {
+    while (ptr -> next != NULL) {
         ptr = ptr -> next;
     }
     ptr -> next = push_front(NULL, num, pid, name);
     return roster;
 }
 
-void fill_roster(char *name, int bg_proc_flag, int num, int pid)
+void fill_roster(char *name, int bg_flag, int num, int pid)
 {
-    if (!bg_proc_flag)
-    {
+    if (!bg_flag) {
         num = 0;
     }
     int len = strlen(name);
     char *tmp = (char *)malloc((len + 1) * sizeof(char));
     tmp = strcpy(tmp, name);
-    if (tmp == NULL)
-    {
+    if (tmp == NULL) {
         err(1, "failed to copy string");
     }
     proc_roster = push_back(proc_roster, num, pid, tmp);
@@ -186,13 +176,11 @@ void fill_roster(char *name, int bg_proc_flag, int num, int pid)
 
 Link find(Link roster, pid_t pid)
 {
-    if (roster == NULL)
-    {
+    if (roster == NULL) {
         return roster;
     }
     Link ptr = roster;
-    while (ptr && ptr -> pid != pid)
-    {
+    while (ptr && ptr -> pid != pid) {
         ptr = ptr -> next;
     }
     return ptr;
@@ -201,16 +189,14 @@ Link find(Link roster, pid_t pid)
 Link del_proc_fm_roster(Link roster, pid_t pid, int status)
 {
     Link ptr = find(roster, pid);
-    if (!ptr)
-    {
+    if (!ptr) {
         return NULL;
     }
     write_out("[");
     write_int(ptr -> num);
     write_out("]+   ");
     write_out(ptr -> name);
-    if (!status)
-    {
+    if (!status) {
         write_out("     Done\n");
     } else if (WIFSIGNALED(status)) {
         psignal(WTERMSIG(status), NULL);
@@ -221,25 +207,6 @@ Link del_proc_fm_roster(Link roster, pid_t pid, int status)
     return roster;
 }
 
-void print_list(char **list)
-{
-    int i = 0;
-    while (list[i] != NULL) {
-        printf("%s ", list[i]);
-        i++;
-    }
-}
-
-void print_list_list(char ***list)
-{
-    int i = 0;
-    while (list[i] != NULL) {
-        print_list(list[i]);
-        printf(" %d\n", i + 1);
-        i++;
-    }
-}
-
 // functions to work in special cases
 // like (quotes, change IO symbols, pipes etc)
 // when filling word 
@@ -248,8 +215,7 @@ char *word_realloc(char *word, int size)
 {
     char *tmp = NULL;
     tmp = (char *)realloc(word, (size + 1) * sizeof(char));
-    if (tmp == NULL)
-    {
+    if (tmp == NULL) {
         free(word);
         err(1, "failed reallocate memory");
     }
@@ -258,14 +224,12 @@ char *word_realloc(char *word, int size)
 
 char *get_quote(char mark)
 {
-    if (mark != '"')
-    {
+    if (mark != '"') {
         return NULL;
     }
     int i = 0;
     char ch, *word = NULL;
-    do
-    {
+    do {
         ch = getchar();
         word = word_realloc(word, i);
         word[i] = ch;
@@ -278,20 +242,18 @@ char *get_quote(char mark)
 char get_first_letter(void)
 {
     char ch = getchar();
-    while (ch == ' ' || ch == '\t')
-    {
-        ch = getchar(); // get symbols until it not a letter or '\n'
+    while (ch == ' ' || ch == '\t') {
+        // get symbols until it not a letter or '\n'
+        ch = getchar();
     }
     return ch;
 }
 
 char *separate_io_word(char ch, char *end)
 {
-    if (ch == '>' || ch == '<')
-    {
+    if (ch == '>' || ch == '<') {
         char *word = (char *)calloc(3, sizeof(char));
-        if (word == NULL)
-        {
+        if (word == NULL) {
             err(1, "failed to allocate memory in separate symbol and word");
         }
         word[1] = ch;
@@ -301,39 +263,37 @@ char *separate_io_word(char ch, char *end)
     return NULL;
 }
 
+char *fill_word(char *word, char *ch, int i)
+{
+    while (*ch != ' ' && *ch != '\t' && *ch != '\n' && *ch != '|' && *ch != '&') {
+        word = word_realloc(word, i);
+        word[i] = *ch;
+        i++;
+        *ch = getchar();
+    }
+    word = word_realloc(word, i);
+    word[i] = '\0'; // set end of the lexeme
+    return word;
+}
+
 char *get_lsymbol(char ch, char *end, int *is_l)
 {
     char *word = malloc(2 * sizeof(char));
     int i = 0;
     word[i] = ch;
     i++;
-    ch = getchar();
-    if (ch == '\n')
-    {
+    if (*end == '&' || (ch = getchar()) == '&') {
+        free(word);
+        *is_l = 1;
+        *end = '&';
+        return NULL;
+    }
+    if (ch == '\n') {
         word[i] = '\0';
         *end = ch;
         return word;
     }
-    if (ch == '&')
-    {
-        word[i] = ch;
-        i++;
-        ch = getchar();
-        if (ch == ' ' || ch == '\t')
-        {
-            free(word);
-            *is_l = 1;
-            *end = '&';
-            return NULL;
-        }
-    }
-    while (ch != ' ' && ch != '\t' && ch != '\n')
-    {
-        word = word_realloc(word, i);
-        word[i] = ch;
-        i++;
-        ch = getchar();
-    }
+    word = fill_word(word, &ch, i);
     *end = ch;
     return word;
 }
@@ -341,8 +301,7 @@ char *get_lsymbol(char ch, char *end, int *is_l)
 char *word_special_case(char ch, char *end)
 {
     char *word = get_quote(ch);
-    if (word)
-    {
+    if (word) {
         return word;
     }
     word = separate_io_word(ch, end);
@@ -353,64 +312,63 @@ char *word_special_case(char ch, char *end)
 
 char *get_word(char *end, int *is_l)
 {
-    if (*end == '\n' || *end == '|') // no more lexemes
-    {
+    if (*end == '\n' || *end == '|' || *end == '&') {
+        // no more lexemes
         return NULL;
     }
-    int i = 0;
     char ch, *word = NULL;
     ch = get_first_letter();
-    if (ch == '\n' || ch == '|')
-    {
+    if (ch == '\n' || ch == '|') {
         *end = ch;
         return NULL;
     }
     word = word_special_case(ch, end);
-    if (word)
-    {
+    if (word) {
         return word;
     }
-    if (ch == '&')
-    {
+    if (ch == '&') {
         word = get_lsymbol(ch, end, is_l);
-        if (word || is_l)
-        {
+        if (word || is_l) {
             return word;
         }
     }
-    while (ch != ' ' && ch != '\t' && ch != '\n' && ch != '|' && ch != '&')
-    {
-        word = word_realloc(word, i);
-        word[i] = ch;
-        i++;
-        ch = getchar();
-    }
-    word = word_realloc(word, i);
-    word[i] = '\0'; // set end of the lexeme
+    word = fill_word(word, &ch, 0);
     *end = ch;
     return word;
 }
 
+/* functions to work with list */
+
+void print_list(char **list)
+{
+    int i = 0;
+    while (list[i] != NULL) {
+        printf("%s ", list[i]);
+        i++;
+    }
+}
+
+char **list_realloc(char **list, int size)
+{
+    char **check = (char **)realloc(list, (size + 1) * sizeof(char *));
+    if (check == NULL) {
+        free_list(list);
+        err(1, NULL);
+    }
+    return check;
+}
+
 char **get_list(char *end_of_line, int *is_l)
 {
-    if (*end_of_line == '\n')
-    {
+    if (*end_of_line == '\n') {
         return NULL;
     }
-    char end = 0, **list = NULL, **check = NULL;
+    char end = 0, **list = NULL;
     int i = 0;
-    do
-    {
-        check = (char **)realloc(list, (i + 1) * sizeof(char *));
-        if (check == NULL)
-        {
-            free_list(list);
-            err(1, NULL);
-        }
-        list = check;
+    do {
+        list = list_realloc(list, i);
         list[i] = get_word(&end, is_l);
-        if (!list[0])
-        {
+        if (!list[0]) {
             free_list(list);
             return NULL;
         }
@@ -420,13 +378,34 @@ char **get_list(char *end_of_line, int *is_l)
     return list;
 }
 
+/* functions to work with catalog */
+
+void print_catalog(char ***catalog)
+{
+    int i = 0;
+    while (catalog[i] != NULL) {
+        print_list(catalog[i]);
+        printf(" %d\n", i + 1);
+        i++;
+    }
+}
+
+char ***catalog_realloc(char ***catalog, int size)
+{
+    char ***check = (char ***)realloc(catalog, (size + 1) * sizeof(char **));
+    if (!check) {
+        free_catalog(catalog);
+        err(1, NULL);
+    }
+    return check;
+}
+
 char ***get_catalog(int *cmds, int *is_l)
 {
     char end_of_line = 0, ***catalog = NULL;
     int i = 0;
-    do
-    {
-        catalog = (char ***)realloc(catalog, (i + 1) * sizeof(char **));
+    do {
+        catalog = catalog_realloc(catalog, i);
         catalog[i] = get_list(&end_of_line, is_l);
         i++;
     } while (catalog[i - 1] != NULL);
@@ -439,10 +418,8 @@ char ***get_catalog(int *cmds, int *is_l)
 int is_bg_proc(char **list)
 {
     int i = 0;
-    while (list[i] != NULL)
-    {
-        if (list[i][0] == '&' && list[i][1] == '\0')
-        {
+    while (list[i] != NULL) {
+        if (list[i][0] == '&' && list[i][1] == '\0') {
             return i;
         }
         i++;
@@ -450,31 +427,31 @@ int is_bg_proc(char **list)
     return FALSE;
 }
 
-void bg_proc_start(char **list, int bg_proc_flag, int bg_proc_count)
+void bg_proc_start(char **list, int bg_flag, int bg_count)
 {
-    if (bg_proc_flag)
-    {
+    if (bg_flag) {
         int pid = getpid();
         write_out("[");
-        write_int(bg_proc_count);
+        write_int(bg_count);
         write_out("]    ");
         write_int(pid);
         write_out("\n");
-        del_string_in_list(bg_proc_flag, list);
+        del_string_in_list(bg_flag, list);
     }
 }
 
-void bg_proc_check(int *count, int bg_proc_flag)
+void bg_proc_check(int *count, int bg_flag)
 {
-    pid_t status, child;
-    if (!bg_proc_flag)
-    {
+    pid_t status = 0, child;
+    if (!bg_flag) {
         Link ptr = proc_roster;
-        while (ptr)
-        {
-            if (ptr -> num == 0)
-            {
+        while (ptr) {
+            if (ptr -> num == 0) {
                 waitpid(ptr -> pid, &status, 0);
+                if (WIFSIGNALED(status)) {
+                    psignal(status, "\n");
+                    break;
+                }
                 proc_roster = pop(proc_roster, ptr -> pid);
                 ptr = proc_roster;
             } else {
@@ -485,8 +462,7 @@ void bg_proc_check(int *count, int bg_proc_flag)
     } else {
         child = waitpid(-1, &status, WNOHANG);
     }
-    if (child != -1 && child != 0)
-    {
+    if (child != -1 && child != 0) {
         proc_roster = del_proc_fm_roster(proc_roster, child, status);
         *count -= 1;
     }
@@ -494,8 +470,7 @@ void bg_proc_check(int *count, int bg_proc_flag)
 
 void bg_proc_wait(int count)
 {
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         wait(NULL);
     }
 }
@@ -507,21 +482,17 @@ ssize_t change_IO(char **list)
     ssize_t fd, io;
     int i = 0;
     char ch;
-    while (list[i] != NULL)
-    {
-        if (!list[i][0])
-        {
+    while (list[i] != NULL) {
+        if (!list[i][0]) {
             ch = list[i][1];
-            if (ch == '>')
-            {
+            if (ch == '>') {
                 fd = open(list[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0755);
                 io = STDOUT_FILENO;
             } else {
                 fd = open(list[i + 1], O_RDONLY);
                 io = STDIN_FILENO;
             }
-            if (fd < 0)
-            {
+            if (fd < 0) {
                 free_list(list);
                 err(1, NULL);
             }
@@ -539,16 +510,15 @@ ssize_t change_IO(char **list)
 
 void get_cwd(char *wd)
 {
-    if (!getcwd(wd, PATH_MAX))
-    {
+    if (!getcwd(wd, PATH_MAX)) {
         err(1, NULL);
     }
 }
 
 void change_dir(char *path)
 {
-    if (path == NULL)
-    {
+    get_cwd(oldpwd);
+    if (path == NULL) {
         perror(NULL);
     } else if (chdir(path)) {
         perror("failed to change directory");
@@ -566,20 +536,16 @@ void change_old_dir(char *oldpwd)
 
 int is_change_dir(char **list)
 {
-    if (strcmp(list[0], "cd"))
-    {
+    if (strcmp(list[0], "cd")) {
         return FALSE;
     }
     char *path = NULL;
-    if (!list[1] || list[1][0] == '~') // change directory to home directory
-    {
-        path = getenv("HOME");
-        get_cwd(oldpwd);
+    if (!list[1] || list[1][0] == '~') {
+        path = getenv("HOME"); // change directory to home directory
         change_dir(path);
-    } else if (list[1][0] == '-'){
-        change_old_dir(oldpwd);
+    } else if (list[1][0] == '-') {
+        change_old_dir(oldpwd); // change directory to previous directory
     } else {
-        get_cwd(oldpwd);
         change_dir(list[1]);
     }
     return TRUE;
@@ -589,34 +555,60 @@ int is_change_dir(char **list)
 
 void pipe_close(int (*pipd)[2], int num)
 {
-    if (close(pipd[num][0]) < 0)
-    {
+    if (close(pipd[num][0]) < 0) {
         err(1, "failed to close pipe %d", num);
     }
-    if (close(pipd[num][1]) < 0)
-    {
+    if (close(pipd[num][1]) < 0) {
         err(1, "failed to close pipe %d", num);
     }
 }
 
-void pipe_initialize(int (*pipd)[2], int cmds, int i)
+void pipe_close_parent(int (*pipd)[2], int j, int cmds, int is_l)
 {
-    if (cmds == 0)
-    { // no pipes in our command
-        return;
+    if (!is_l && j < cmds) {
+        pipe_close(pipd, j);
     }
-    if (i)
-    {
+}
+
+void pipe_initialize(int (*pipd)[2], int cmds, int i, int is_l)
+{
+    if (cmds == 0 || is_l) {
+        return; // no pipes in our command
+    }
+    if (i) {
         dup2(pipd[i - 1][0], 0);
     }
-    if (i != cmds)
-    {
+    if (i != cmds) {
         dup2(pipd[i][1], 1);
+    }
+    for (int j = 0; j != cmds && j < i; j++) {
+        pipe_close(pipd, j);
     }
 }
 
 /* logical or functions */
 
+int wait_for_lfunc(int is_l)
+{
+    if (!is_l) {
+        return 0;
+    }
+    int status;
+    Link ptr = proc_roster;
+    while (ptr) {
+        if (ptr -> num == 0) {
+            waitpid(ptr -> pid, &status, 0);
+            if (WEXITSTATUS(status)) {
+                return WEXITSTATUS(status);
+            }
+            proc_roster = pop(proc_roster, ptr -> pid);
+            ptr = proc_roster;
+        } else {
+            ptr = ptr -> next;
+        }
+    }
+    return 0;
+}
 
 
 /* other functions */
@@ -639,119 +631,99 @@ void new_line(void)
 {
     char pc_name[HOST_NAME_MAX], login[LOGIN_NAME_MAX];
     char cwd[PATH_MAX];
-    if (getlogin_r(login, LOGIN_NAME_MAX))
-    {
+    if (getlogin_r(login, LOGIN_NAME_MAX)) {
         err(1, "failed to get username");
     }
-    if (gethostname(pc_name, HOST_NAME_MAX))
-    {
+    if (gethostname(pc_name, HOST_NAME_MAX)) {
         err(1, "failed to get host name");
     }
-    if (!getcwd(cwd, PATH_MAX))
-    {
-        err(1, "failed to get path to current directory");
-    }
+    get_cwd(cwd);
     print_line(login, pc_name, cwd);
 }
 
 /* function to execute commands */
 
-int is_endline(char ***catalog, int bg_proc_count)
+int is_endline(char ***catalog, int bg_count)
 {
-    if (!catalog[0])
-    { // line consist only '\n'
-        return FALSE;
+    if (!catalog[0]) {
+        return FALSE; // line consist only '\n'
     }
-    if ((!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit")))
-    {
-        bg_proc_wait(bg_proc_count);
+    if ((!strcmp(catalog[0][0], "exit") || !strcmp(catalog[0][0], "quit"))) {
+        bg_proc_wait(bg_count);
         free_catalog(catalog);
         return TRUE;
     }
     return FALSE;
 }
 
-void execute(char **list, int bg_proc_flag, int bg_proc_count)
+int execute(char **list, int bg_flag, int bg_count)
 {
     ssize_t fd, fd2;
-    bg_proc_start(list, bg_proc_flag, bg_proc_count);
+    bg_proc_start(list, bg_flag, bg_count);
     fd = change_IO(list);  // check for special symbols like "<" or ">"
     fd2 = change_IO(list); // check for the second one
-    if (execvp(list[0], list) < 0)
-    {
-        free_list(list);
-        err(1, NULL);
+    if (execvp(list[0], list) < 0) {
+        perror(NULL);
+        return EXIT_FAILURE;
     }
-    if (fd != 0)
-    {
+    if (fd != 0) {
         close(fd);
     }
-    if (fd2 != 0)
-    {
+    if (fd2 != 0) {
         close(fd2);
     }
+    free_list(list);
+    return EXIT_SUCCESS;
 }
 
-int execcat(void)
+int shell(void)
 {
-    int i, cmds, bg_proc_flag = 0, bg_proc_count = 0, is_l = 0;
+    int i, cmds, bg_flag = 0, bg_count = 0, is_l;
     pid_t pid;
     char ***catalog = NULL;
-    while (1)
+    while (TRUE)
     {
         new_line();
         is_l = 0;
         catalog = get_catalog(&cmds, &is_l);
-        print_list_list(catalog);
-        if (!catalog)
-        {
+        if (!catalog) {
             err(1, "failed to create catalog");
         }
-        if (is_endline(catalog, bg_proc_count))
-        {
+        if (is_endline(catalog, bg_count)) {
             return EXIT_SUCCESS;
         }
         int pipd[cmds + 2][2];
         i = 0;
-        while (catalog[i] != NULL && is_change_dir(catalog[i]) != TRUE)
-        {
-            bg_proc_flag = is_bg_proc(catalog[cmds]);
-            bg_proc_count += bg_proc_flag;
-            if (i != cmds && !is_l && pipe(pipd[i]) < 0)
-            {
+        while (catalog[i] != NULL && is_change_dir(catalog[i]) != TRUE) {
+            bg_flag = is_bg_proc(catalog[cmds]);
+            bg_count += bg_flag;
+            if (i != cmds && !is_l && pipe(pipd[i]) < 0) {
                 err(1, "failed to create pipe");
             }
-            if ((pid = fork()) < 0)
-            {
+            if ((pid = fork()) < 0) {
                 free_catalog(catalog);
                 err(1, NULL);
             }
-            if (!pid)
-            { // child process
-                pipe_initialize(pipd, cmds, i);
-                for (int j = 0; j != cmds && j < i && !is_l; j++)
-                {
-                    pipe_close(pipd, j);
+            if (!pid) {
+                pipe_initialize(pipd, cmds, i, is_l); // child process
+                if (execute(catalog[i], bg_flag, bg_count)) {
+                    free_catalog(catalog);
+                    return EXIT_FAILURE;
                 }
-                execute(catalog[i], bg_proc_flag, bg_proc_count);
+                free_catalog(catalog);
                 return EXIT_SUCCESS; // close child process
             }
-            fill_roster(catalog[i][0], bg_proc_flag, bg_proc_count, pid);
-            if (is_l)
-            {
-                int status;
-                wait(&status);
-                printf("%d\n", WEXITSTATUS(status));
+            fill_roster(catalog[i][0], bg_flag, bg_count, pid);
+            if (wait_for_lfunc(is_l)) {
+                // if previos logical function return failure
+                // we dont need to continue execute programs
+                break;
             }
             i++;
         }
-        for (int j = 0; j <= i; j++)
-        {
-            if (j < cmds && !is_l)
-            {
-                pipe_close(pipd, j);
-            }
-            bg_proc_check(&bg_proc_count, bg_proc_flag);
+        for (int j = 0; j <= i; j++) {
+            pipe_close_parent(pipd, j, cmds, is_l);
+            bg_proc_check(&bg_count, bg_flag);
         }
         free_catalog(catalog);
     }
@@ -763,10 +735,8 @@ void handler(void)
     Link ptr = proc_roster;
     write_out("\n");
     new_line();
-    while (ptr)
-    {
-        if (ptr -> num == 0)
-        {
+    while (ptr) {
+        if (ptr -> num == 0) {
             kill(ptr -> pid, SIGKILL);
             proc_roster = pop(proc_roster, ptr -> pid);
             ptr = proc_roster;
@@ -779,7 +749,7 @@ void handler(void)
 int main(void)
 {
     signal(SIGINT, (void (*)(int))handler);
-    execcat();
+    shell();
     free_roster(proc_roster);
     return EXIT_SUCCESS;
 }
