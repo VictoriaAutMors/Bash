@@ -517,11 +517,17 @@ void get_cwd(char *wd)
 
 void change_dir(char *path)
 {
+    int change_flag = 1;
     get_cwd(oldpwd);
     if (path == NULL) {
         perror(NULL);
+        change_flag = 0;
     } else if (chdir(path)) {
         perror("failed to change directory");
+        change_flag = 0;
+    }
+    if (setenv("PWD", path, change_flag)) {
+        err(1, NULL);
     }
 }
 
@@ -714,6 +720,7 @@ int shell(void)
                 return EXIT_SUCCESS; // close child process
             }
             fill_roster(catalog[i][0], bg_flag, bg_count, pid);
+            print(proc_roster);
             if (wait_for_lfunc(is_l)) {
                 // if previos logical function return failure
                 // we dont need to continue execute programs
