@@ -79,7 +79,7 @@ Redirection is a feature in Linux such that when executing a command, you can ch
 
 ### How to change input and output:
 **compile and run program**
-* cmd < input.txt > output.txt(take data from input.txt and store result in output.txt
+* cmd < input.txt > output.txt(take data from input.txt and store result in output.txt)
         
 ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
