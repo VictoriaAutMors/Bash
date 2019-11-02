@@ -37,13 +37,20 @@ Shell implementation in C language
         3) exit or quit(to exit from program)
         
   ## How to change directory:
-      **run and compile program**
+      compile and run program
       1)  cd path
       2)  ....
-      * **if path: **
-          1) left empty or write "~" change to home directory; 
+      if path:
+          1) left empty or "~" change to home directory; 
           2) ".." change to parent directory; 
           3) "-" change to previous directory;
             
- ## ctrl + c signal:
+  ## How run to run program in background:
+    compile and run program
+    * cmd &
+    program will print number and PID of background process
+    -----------
+    if backgorund process is completed, program will print number and name of completed process 
+
+## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
