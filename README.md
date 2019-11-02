@@ -12,14 +12,14 @@ Shell is a command-line interpreter or shell that provides a command line user i
 3) change directory 
 4) background process 
 5) change input/output
-6) ctr + c signal to terminate current(all) process
+6) ctr + c signal to terminate foreground(all) process
 
 ---
 
 ## How to compile and run program:
 1) download makefile and put it in the same directory with the code
-2) run in terminal: make (file name)
-3) run in terminal: ./(file name)
+2) run in terminal: make [file name]
+3) run in terminal: ./[file name]
 
 ---
 
@@ -40,9 +40,9 @@ further processing. You can make it do so by using the pipe character ‘|’.
 
 ### How to run program with pipes:
 **compile and run program**
-1) cmd1 | cmd2 | ... | cmdn 
-2) ....
-3) exit or quit(to exit from program)
+* cmd1 | cmd2 | ... | cmdn
+
+Also, acceptable: cmd1|cmd2 or cmd1| cmd2 or cmd1 |cmd2
      
 ---
      
@@ -51,7 +51,7 @@ further processing. You can make it do so by using the pipe character ‘|’.
 1)  cd [path]
 2)  ....
 
-Change the current directory to path
+Change the current directory to path.
 
 **if path:**
   1) left empty or "~" change to home directory; 
@@ -79,7 +79,7 @@ Redirection is a feature in Linux such that when executing a command, you can ch
 
 ### How to change input and output:
 **compile and run program**
-* cmd < input.txt > output.txt
+* cmd < input.txt > output.txt(take data from input.txt and store result in output.txt
         
 ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
