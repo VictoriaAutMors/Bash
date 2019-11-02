@@ -50,7 +50,7 @@ further processing. You can make it do so by using the pipe character ‘|’.
 **compile and run program**
 1)  cd path
 2)  ....
-**if path:**
+* **if path:**
   1) left empty or "~" change to home directory; 
   2) ".." change to parent directory; 
   3) "-" change to previous directory;
