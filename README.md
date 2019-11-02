@@ -5,23 +5,23 @@ Shell implementation in C language
 shell is a command-line interpreter or shell that provides a command line user interface for Unix-like operating systems.The shell is both an interactive command language and a scripting language, and is used by the operating system to control the execution of the system using shell scripts.
 
 ## shell features:
-    1) execute command
-    2) pipes 
-    3) change directory 
-    4) background process 
-    5) change input/output
-    6) ctr + c signal to terminate current(all) process
+1) execute command
+2) pipes 
+3) change directory 
+4) background process 
+5) change input/output
+6) ctr + c signal to terminate current(all) process
 
 ## How to compile and run program:
-    1) download makefile and put it in the same directory with the code
-    2) run in terminal: make (file name)
-    3) run in terminal: ./(file name)
+1) download makefile and put it in the same directory with the code
+2) run in terminal: make (file name)
+3) run in terminal: ./(file name)
 
 ## Examples how to execute programm:
-    compile and run program
-    1) cmd
-    2) ....
-    3) exit or quit(to exit from program)
+**compile and run program**
+1) cmd
+2) ....
+3) exit or quit(to exit from program)
   
  ## what is pipes:
     A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other 
