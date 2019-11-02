@@ -48,8 +48,10 @@ further processing. You can make it do so by using the pipe character ‘|’.
      
 ## How to change working directory:
 **compile and run program**
-1)  cd path
+1)  cd [path]
 2)  ....
+
+Change the current directory to path
 
 **if path:**
   1) left empty or "~" change to home directory; 
@@ -71,7 +73,7 @@ In Unix, a background process executes independently of the shell, leaving the t
 ---  
   
 ## What is change input and output:
-Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<'/'>'.
+Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<' / '>' respectively.
 
 ---
 
