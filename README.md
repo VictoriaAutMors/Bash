@@ -6,7 +6,7 @@ Shell is a command-line interpreter or shell that provides a command line user i
 
 ---
 
-## shell features:
+## Shell Features:
 1) execute command
 2) pipes 
 3) change directory 
@@ -23,7 +23,7 @@ Shell is a command-line interpreter or shell that provides a command line user i
 
 ---
 
-## Examples how to execute programm:
+## Examples how to execute command:
 **compile and run program**
 1) cmd
 2) ....
@@ -31,7 +31,7 @@ Shell is a command-line interpreter or shell that provides a command line user i
   
 ---
   
-## what is pipes:
+## What is Pipes:
 A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other 
 Unix-like operating systems to send the output of one command/program/process to another command/program/process for 
 further processing. You can make it do so by using the pipe character ‘|’. 
@@ -58,7 +58,7 @@ further processing. You can make it do so by using the pipe character ‘|’.
   
 ---
   
-## What is background process
+## What is Background process
 In Unix, a background process executes independently of the shell, leaving the terminal free for other work. To run a process in the background, include an & (an ampersand) at the end of the command you use to run the job. 
 
 ### How to run program in background:
