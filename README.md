@@ -50,8 +50,8 @@ In Unix, a background process executes independently of the shell, leaving the t
 ### How to run program in background:
 **compile and run program**
 * cmd &
+------
 program will print number and PID of background process
------------
 if backgorund process is completed, program will print number and name of completed process 
   
   ## What is change input and output:
