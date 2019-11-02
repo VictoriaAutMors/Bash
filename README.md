@@ -7,12 +7,12 @@ Shell implementation in C language
     control the execution of the system using shell scripts.
 
 ## shell supports:
-    1) pipes
-    2) background process
-    3) ctr + c signal to terminate current(all) process
-    4) change directory
+    1) execute command
+    2) pipes 
+    3) change directory 
+    4) background process 
     5) change input/output
-    6) execute command
+    6) ctr + c signal to terminate current(all) process
 
 ## How to run program:
     1) download makefile and put it in the same directory with the code
@@ -20,7 +20,7 @@ Shell implementation in C language
     3) run in terminal: ./(file name)
 
 ## Examples how to execute programm:
-    **run and compile program**
+    compile and run program
     1) cmd
     2) ....
     3) exit or quit(to exit from program)
@@ -31,8 +31,8 @@ Shell implementation in C language
     further processing. You can make it do so by using the pipe character ‘|’. 
     
     how to run program with pipes:
-        **run and compile program**
-        1) cmd1 | cmd2 or cmd1|cmd2 or cmd1 |cmd2 or cmd1| cmd2
+        compile and run program
+        1) cmd1 | cmd2 | ... | cmdn 
         2) ....
         3) exit or quit(to exit from program)
         
@@ -40,10 +40,10 @@ Shell implementation in C language
       **run and compile program**
       1)  cd path
       2)  ....
-      **if path:** 
-            1) left empty or write "~" change to home directory; 
-            2) ".." change to parent directory; 
-            3) "-" change to previous directory;
+   **if path: 
+        1) left empty or write "~" change to home directory; 
+        2) ".." change to parent directory; 
+        3) "-" change to previous directory;
             
  ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
