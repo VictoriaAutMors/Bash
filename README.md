@@ -29,9 +29,9 @@ shell is a command-line interpreter or shell that provides a command line user i
 2) ....
 3) exit or quit(to exit from program)
   
-  ---
+---
   
- ## what is pipes:
+## what is pipes:
 A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other 
 Unix-like operating systems to send the output of one command/program/process to another command/program/process for 
 further processing. You can make it do so by using the pipe character ‘|’. 
@@ -44,7 +44,7 @@ further processing. You can make it do so by using the pipe character ‘|’.
 2) ....
 3) exit or quit(to exit from program)
      
-     ---
+---
      
 ## How to change working directory:
 **compile and run program**
@@ -55,9 +55,9 @@ further processing. You can make it do so by using the pipe character ‘|’.
   2) ".." change to parent directory; 
   3) "-" change to previous directory;
   
-  ---
+---
   
-  ## What is background process
+## What is background process
 In Unix, a background process executes independently of the shell, leaving the terminal free for other work. To run a process in the background, include an & (an ampersand) at the end of the command you use to run the job. 
 
 ### How to run program in background:
@@ -65,12 +65,11 @@ In Unix, a background process executes independently of the shell, leaving the t
 * cmd &
 ------
 program will print number and PID of background process.
-
-if backgorund process is completed, program will print number and name of completed process 
+if backgorund process is completed, program will print number and name of completed process.
   
 ---  
   
-  ## What is change input and output:
+## What is change input and output:
 Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<'/'>'.
 
 ---
