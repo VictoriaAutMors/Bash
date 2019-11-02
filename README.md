@@ -2,7 +2,7 @@
 Shell implementation in C language
   
 ##  What is Shell:
-shell is a command-line interpreter or shell that provides a command line user interface for Unix-like operating systems.The shell is both an interactive command language and a scripting language, and is used by the operating system to control the execution of the system using shell scripts.
+Shell is a command-line interpreter or shell that provides a command line user interface for Unix-like operating systems.The shell is both an interactive command language and a scripting language, and is used by the operating system to control the execution of the system using shell scripts.
 
 ---
 
@@ -64,8 +64,8 @@ In Unix, a background process executes independently of the shell, leaving the t
 **compile and run program**
 * cmd &
 ------
-program will print number and PID of background process.
-if backgorund process is completed, program will print number and name of completed process.
+* Program will print number and PID of background process.
+* If backgorund process is completed, program will print number and name of completed process.
   
 ---  
   
