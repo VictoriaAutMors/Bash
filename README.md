@@ -39,4 +39,4 @@ Shell implementation in C language
       4)  ..
       5) exit or quit(to exit from program) 
  ## ctrl + c signal:
-      if something went wrong, push ctrl + c to kill all child processes
+      if something went wrong, press ctrl + c to kill all child processes
