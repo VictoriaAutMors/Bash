@@ -1,5 +1,5 @@
 # semestrial-work-1
-Shell implementation in C
+Shell implementation in C language
 
 shell supports:
   1) pipes
@@ -8,5 +8,10 @@ shell supports:
   4) change directory
   5) change input/output
   
-Examples:
-  1) cmd1|cmd2 or cmd1 |cm2 or cmd1| cmd2 or cmd1 | cmd2
+Examples how to run programm:
+  1) make sem1 // compile program
+  2) ./sem1  // run program
+  3)  ls(or other command)
+  4) ....
+  5) exit or quit(to exit from program)
+  
