@@ -43,7 +43,7 @@ Shell implementation in C language
    **if path: 
         1) left empty or write "~" change to home directory; 
         2) ".." change to parent directory; 
-        3) "-" change to previous directory;
+        3) "-" change to previous directory;**
             
  ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
