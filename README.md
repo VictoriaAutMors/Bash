@@ -49,16 +49,18 @@ Shell implementation in C language
     In Unix, a background process executes independently of the shell, leaving the terminal free for other work. To run a process in the background, include an & (an ampersand) at the end of the command you use to run the job. 
     
     How to run program in background:
-    <b> compile and run program </b>
-    1) cmd &
+      compile and run program
+      * cmd &
     program will print number and PID of background process
     -----------
     if backgorund process is completed, program will print number and name of completed process 
   
   ## What is change input and output:
-      Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices. The basic workflow of any Linux command is that it takes an input and give an output.
+      Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<'/'>'.
       
       How to change input and output:
-      1)
+        compile and run program
+        1) cmd < input.txt > output.txt
+        
 ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
