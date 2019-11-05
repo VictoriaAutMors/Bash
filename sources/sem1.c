@@ -6,7 +6,6 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <math.h>
 #include <signal.h>
 
 #define TRUE 1
@@ -312,7 +311,7 @@ char *word_special_case(char ch, char *end)
 
 char *get_word(char *end, int *is_l)
 {
-    if (*end == '\n' || *end == '|' || *end == '&') {
+    if (*end == '\n' || *end == '|') {
         // no more lexemes
         return NULL;
     }
@@ -363,7 +362,7 @@ char **get_list(char *end_of_line, int *is_l)
     if (*end_of_line == '\n') {
         return NULL;
     }
-    char end = 0, **list = NULL;
+    char end = *end_of_line, **list = NULL;
     int i = 0;
     do {
         list = list_realloc(list, i);
@@ -599,23 +598,19 @@ int wait_for_lfunc(int is_l)
     if (!is_l) {
         return 0;
     }
-    int status;
+    int status = 0;
     Link ptr = proc_roster;
     while (ptr) {
         if (ptr -> num == 0) {
             waitpid(ptr -> pid, &status, 0);
-            if (WEXITSTATUS(status)) {
-                return WEXITSTATUS(status);
-            }
             proc_roster = pop(proc_roster, ptr -> pid);
-            ptr = proc_roster;
+            return WEXITSTATUS(status);
         } else {
             ptr = ptr -> next;
         }
     }
     return 0;
 }
-
 
 /* other functions */
 
@@ -714,13 +709,12 @@ int shell(void)
                 pipe_initialize(pipd, cmds, i, is_l); // child process
                 if (execute(catalog[i], bg_flag, bg_count)) {
                     free_catalog(catalog);
-                    return EXIT_FAILURE;
+                    exit(EXIT_FAILURE);
                 }
                 free_catalog(catalog);
                 return EXIT_SUCCESS; // close child process
             }
             fill_roster(catalog[i][0], bg_flag, bg_count, pid);
-            print(proc_roster);
             if (wait_for_lfunc(is_l)) {
                 // if previos logical function return failure
                 // we dont need to continue execute programs
