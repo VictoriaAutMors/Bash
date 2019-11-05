@@ -2,7 +2,7 @@
 Shell implementation in C language
   
 ##  What is Shell:
-In Unix, the shell is a program that interprets commands and acts as an intermediary between the user and the inner workings of the operating system. Providing a command-line interface (that is, the shell prompt or command prompt), the shell is analogous to DOS and serves a purpose similar to graphical interfaces like Windows, Mac, and the X Window System.
+    In Unix, the shell is a program that interprets commands and acts as an intermediary between the user and the inner workings of the operating system. Providing a command-line interface (that is, the shell prompt or command prompt), the shell is analogous to DOS and serves a purpose similar to graphical interfaces like Windows, Mac, and the X Window System.
 
 ---
 
@@ -12,7 +12,8 @@ In Unix, the shell is a program that interprets commands and acts as an intermed
 3) change directory 
 4) background process 
 5) change input/output
-6) ctr + c signal to terminate foreground(all) process
+6) logical and(&&)
+7) ctr + c signal to terminate foreground(all) process
 
 ---
 
@@ -32,11 +33,7 @@ In Unix, the shell is a program that interprets commands and acts as an intermed
 ---
   
 ## What is Pipes:
-A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other 
-Unix-like operating systems to send the output of one command/program/process to another command/program/process for 
-further processing. You can make it do so by using the pipe character ‘|’. 
-
----
+    A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other Unix-like operating systems to send the output of one command/program/process to another command/program/process for further processing. You can make it do so by using the pipe character ‘|’. 
 
 ### How to run program with pipes:
 **compile and run program**
@@ -61,25 +58,41 @@ Change the current directory to path.
 ---
   
 ## What is Background process
-In Unix, a background process executes independently of the shell, leaving the terminal free for other work. To run a process in the background, include an & (an ampersand) at the end of the command you use to run the job. 
+    In Unix, a background process executes independently of the shell, leaving the terminal free for other work. To run a process in the background, include an & (an ampersand) at the end of the command you use to run the job. 
 
 ### How to run program in background:
 **compile and run program**
 * cmd &
-------
+
+
+
 * Program will print number and PID of background process.
 * If backgorund process is completed, program will print number and name of completed process.
   
 ---  
   
 ## What is change input and output:
-Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<' / '>' respectively.
+    Redirection is a feature in Linux such that when executing a command, you can change the standard input/output devices using '<' / '>' respectively.
 
 ---
 
 ### How to change input and output:
 **compile and run program**
 * cmd < input.txt > output.txt(take data from input.txt and store result in output.txt)
-        
+  
+--- 
+  
+## What is logical AND(&&)
+    Logical AND is used to chain commands together, such that the next command is run if and only if the preceding command exited without errors (or, more accurately, exits with a return code of 0).
+    
+### How to run program with logical AND:
+**compile and run program**
+1) cmd1 && cmd2 &&...&& cmdn
+2) ....
+
+Also, acceptable: cmd1&&cmd2 or cmd1&& cmd2 or cmd1 &&cmd2
+
+---
+
 ## ctrl + c signal:
       if something went wrong, press ctrl + c to kill all child processes
