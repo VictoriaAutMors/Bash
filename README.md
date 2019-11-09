@@ -11,7 +11,7 @@ System.
 
 ## Shell Features:
 1) execute command
-2) pipes 
+2) pipelines
 3) change directory 
 4) background process 
 5) change input/output
@@ -35,12 +35,12 @@ System.
   
 ---
   
-## What is Pipes:
+## What does in pipeline mean?:
 A pipe is a form of redirection (transfer of standard output to some other destination) that is used in Linux and other 
 Unix-like operating systems to send the output of one command/program/process to another command/program/process for 
 further processing. You can make it do so by using the pipe character ‘|’. 
 
-### How to run program with pipes:
+### How to run program with pipelines:
 **compile and run program**
 * cmd1 | cmd2 | ... | cmdn
 
@@ -89,11 +89,11 @@ using '<' / '>' respectively.
   
 --- 
   
-## What is logical AND(&&)
+## What does logical AND(&&) mean:
 Logical AND is used to chain commands together, such that the next command is run if and only if the preceding command 
 exited without errors (or, more accurately, exits with a return code of 0).
     
-### How to run program with logical AND:
+### How to run program with logical AND(&&):
 **compile and run program**
 1) cmd1 && cmd2 &&...&& cmdn
 2) ....
