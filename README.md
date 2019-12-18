@@ -103,4 +103,4 @@ Also, acceptable: cmd1&&cmd2 or cmd1&& cmd2 or cmd1 &&cmd2
 ---
 
 ## ctrl + c signal:
-    if something went wrong, press ctrl + c to kill all child processes
+  if something went wrong, press ctrl + c to kill all child processes
